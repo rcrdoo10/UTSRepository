@@ -1,16 +1,13 @@
-// Data Penukaran Per Hari (1-30 Mei 2026)
 const penukaranPerHari = [
   12, 8, 15, 10, 7, 14, 18, 22, 19, 25, 30, 28, 35, 32, 40, 38, 45, 42, 50, 48,
   55, 52, 60, 58, 65, 62, 70, 68, 75, 72,
 ];
 
-// Label tanggal (1-30 Mei)
 const labels = [];
 for (let i = 1; i <= 30; i++) {
   labels.push(`${i} Mei`);
 }
 
-// SEMUA data riwayat penukaran
 let allHistoryData = [
   {
     tanggal: "30 Mei 2026, 18:30",
@@ -80,7 +77,6 @@ let totalTransaksi = 2847;
 
 let mainChart;
 
-// Element references
 const navToggle = document.getElementById("navToggle");
 const navigation = document.getElementById("navigation");
 const overlay = document.getElementById("overlay");

@@ -10,7 +10,6 @@ body {
     min-height: 100vh;
 }
 
-/* Tombol hamburger menu */
 .nav-toggle {
     position: fixed;
     top: 20px;
@@ -52,7 +51,6 @@ body {
     transform: rotate(-45deg) translate(6px, -6px);
 }
 
-/* Sidebar navigasi */
 .navigation {
     position: fixed;
     top: 0;
@@ -115,7 +113,6 @@ body {
     font-weight: 600;
 }
 
-/* Overlay */
 .overlay {
     position: fixed;
     top: 0;
@@ -135,14 +132,12 @@ body {
     visibility: visible;
 }
 
-/* MAIN CONTENT */
 .dashboard-container {
     max-width: 1400px;
     margin: 0 auto;
     padding: 24px 28px 48px 28px;
 }
 
-/* Header area */
 .header-flex {
     display: flex;
     justify-content: space-between;
@@ -184,7 +179,6 @@ body {
     transform: scale(0.98);
 }
 
-/* Kartu statistik */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -243,7 +237,6 @@ body {
     font-size: 0.75rem;
 }
 
-/* GRAFIK */
 .chart-fullwidth {
     background: #ffffff;
     border-radius: 32px;
@@ -279,7 +272,6 @@ body {
     flex-wrap: wrap;
 }
 
-/* Tabel riwayat */
 .recent-section {
     background: #ffffff;
     border-radius: 32px;
@@ -376,7 +368,6 @@ td {
     text-decoration: underline;
 }
 
-/* Modal Riwayat Lengkap */
 .full-history-modal {
     display: none;
     position: fixed;
@@ -439,7 +430,6 @@ td {
     }
 }
 
-/* footer motivasi */
 .motivation-footer {
     background: linear-gradient(105deg, #eef5f2, #e2ede7);
     border-radius: 30px;

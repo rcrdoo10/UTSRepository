@@ -1,4 +1,3 @@
-// Data reward dengan stok dan kategori
 let rewardsData = [
   {
     id: 1,
@@ -69,7 +68,6 @@ let rewardsData = [
 let currentCategoryFilter = "all";
 let nextRewardId = 9;
 
-// Element references
 const navToggle = document.getElementById("navToggle");
 const navigation = document.getElementById("navigation");
 const overlay = document.getElementById("overlay");
@@ -333,7 +331,6 @@ function initEventListeners() {
     });
   }
 
-  // Filter kategori buttons
   const categoryBtns = document.querySelectorAll(".category-btn");
   categoryBtns.forEach((btn) => {
     btn.addEventListener("click", () => {

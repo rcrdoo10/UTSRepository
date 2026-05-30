@@ -1,4 +1,3 @@
-// Data transaksi pending (menunggu verifikasi)
 let pendingTransactions = [
   {
     id: 1,
@@ -42,7 +41,6 @@ let pendingTransactions = [
   },
 ];
 
-// Data transaksi yang sudah disetujui
 let approvedTransactions = [
   {
     id: 6,
@@ -86,7 +84,6 @@ let approvedTransactions = [
   },
 ];
 
-// Data reward untuk update stok
 let rewardsData = [
   {
     id: 1,
@@ -134,7 +131,6 @@ let totalReward = rewardsData.reduce((sum, r) => sum + r.stock, 0);
 let totalTransaksi = 2847;
 let currentVerifikasiTab = "pending";
 
-// Element references
 const navToggle = document.getElementById("navToggle");
 const navigation = document.getElementById("navigation");
 const overlay = document.getElementById("overlay");
@@ -170,7 +166,6 @@ function updateDashboardData() {
   localStorage.setItem("pendingCount", pendingTransactions.length);
   localStorage.setItem("totalTransaksi", totalTransaksi);
 
-  // Update allHistoryData di dashboard
   let allHistoryData = [];
   approvedTransactions.forEach((t) => {
     allHistoryData.unshift({

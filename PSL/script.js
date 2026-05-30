@@ -1,5 +1,3 @@
-// ----- DATA DASHBOARD -----
-// Data harian untuk agregasi
 const dailyData = {
   labels: [
     "1 Mei",
@@ -49,7 +47,6 @@ let currentPeriod = "weekly";
 
 let mainChart;
 
-// Fungsi agregasi data berdasarkan periode
 function getWeeklyData() {
   const weeks = [];
   const weeklyBotol = [];
@@ -97,11 +94,9 @@ function getMonthlyData() {
   const monthlyBotol = new Array(12).fill(0);
   const monthlyBerat = new Array(12).fill(0);
 
-  // Data untuk bulan Mei (bulan ke-5, index 4)
   monthlyBotol[4] = dailyData.botol.reduce((a, b) => a + b, 0);
   monthlyBerat[4] = dailyData.berat.reduce((a, b) => a + b, 0);
 
-  // Data dummy untuk bulan lain
   monthlyBotol[3] = 650;
   monthlyBerat[3] = 520;
   monthlyBotol[5] = 850;
@@ -162,7 +157,6 @@ function updateChart(period) {
   }
 }
 
-// Fungsi unduh laporan
 async function downloadReport() {
   const reportSection = document.getElementById("reportSection");
   const originalBoxShadow = reportSection.style.boxShadow;
@@ -203,7 +197,6 @@ async function downloadReport() {
   }
 }
 
-// Element references
 const navToggle = document.getElementById("navToggle");
 const navigation = document.getElementById("navigation");
 const overlay = document.getElementById("overlay");
@@ -295,7 +288,6 @@ function initEventListeners() {
     });
   }
 
-  // Filter period buttons
   const filterBtns = document.querySelectorAll(".filter-btn");
   filterBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -306,7 +298,6 @@ function initEventListeners() {
     });
   });
 
-  // Download report button
   const downloadBtn = document.getElementById("downloadReportBtn");
   if (downloadBtn) {
     downloadBtn.addEventListener("click", downloadReport);

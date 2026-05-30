@@ -1,4 +1,3 @@
-// Data user valid dengan username
 const validUsers = [
   {
     username: "rayricardo",
@@ -9,7 +8,6 @@ const validUsers = [
   { username: "admin", password: "admin123", name: "Admin", role: "admin" },
 ];
 
-// Toggle password visibility
 const togglePassword = document.getElementById("togglePassword");
 const passwordInput = document.getElementById("password");
 
@@ -21,7 +19,6 @@ togglePassword.addEventListener("click", function () {
   this.classList.toggle("fa-eye-slash");
 });
 
-// Show alert message
 function showAlert(message, type = "error") {
   const alertBox = document.getElementById("alertBox");
   alertBox.innerHTML = `<i class="fas ${type === "error" ? "fa-exclamation-circle" : "fa-check-circle"}"></i> ${message}`;
@@ -33,26 +30,22 @@ function showAlert(message, type = "error") {
   }, 3000);
 }
 
-// Handle login
 document.getElementById("loginForm").addEventListener("submit", function (e) {
   e.preventDefault();
 
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value;
 
-  // Validasi input kosong
   if (!username || !password) {
     showAlert("❌ Username dan password harus diisi!", "error");
     return;
   }
 
-  // Cari user berdasarkan username
   const user = validUsers.find(
     (u) => u.username === username && u.password === password,
   );
 
   if (user) {
-    // Simpan data user ke localStorage
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("userName", user.name);
     localStorage.setItem("userUsername", user.username);
@@ -60,7 +53,6 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
 
     showAlert(`✅ Selamat datang, ${user.name}! Mengalihkan...`, "success");
 
-    // Redirect berdasarkan role
     setTimeout(() => {
       if (user.role === "admin") {
         window.location.href = "dashboard/dashboard.html";
@@ -69,7 +61,6 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
       }
     }, 1500);
   } else {
-    // Cek apakah username ada tapi password salah
     const userExists = validUsers.some((u) => u.username === username);
     if (userExists) {
       showAlert("❌ Password salah!", "error");
@@ -79,7 +70,6 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
   }
 });
 
-// Cek apakah sudah login
 if (localStorage.getItem("isLoggedIn") === "true") {
   const role = localStorage.getItem("userRole");
   if (role === "admin") {
@@ -89,7 +79,6 @@ if (localStorage.getItem("isLoggedIn") === "true") {
   }
 }
 
-// Enter key submit
 document.getElementById("password").addEventListener("keypress", function (e) {
   if (e.key === "Enter") {
     document.getElementById("loginForm").dispatchEvent(new Event("submit"));
