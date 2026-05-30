@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Dompet Sadhar - Dashboard Sampah Plastik</title>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- html2canvas untuk export laporan -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+
+        /* Tombol hamburger menu */
+        .nav-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 48px;
+            height: 48px;
+            background: #ffffff;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+            transition: all 0.25s ease;
+        }
+
+        .nav-toggle span {
+            display: block;
+            width: 24px;
+            height: 2.5px;
+            background: #1e2f3a;
+            border-radius: 4px;
+            transition: 0.25s;
+        }
+
+        .nav-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .nav-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .nav-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        /* Sidebar navigasi */
+        .navigation {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100vh;
+            background: #ffffff;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
+            transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            z-index: 1000;
+            padding-top: 90px;
+            overflow-y: auto;
+        }
+
+        .navigation.active {
+            left: 0;
+        }
+
+        .navigation ul {
+            list-style: none;
+        }
+
+        .navigation ul li {
+            margin: 8px 16px;
+            border-radius: 20px;
+            transition: 0.2s;
+        }
+
+        .navigation ul li a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 20px;
+            color: #1e2f3a;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            border-radius: 28px;
+            transition: all 0.2s;
+        }
+
+        .navigation ul li a i {
+            width: 24px;
+            font-size: 1.2rem;
+            color: #5f7c8b;
+        }
+
+        .navigation ul li:hover {
+            background: #e9edf2;
+        }
+
+        .navigation ul li.active {
+            background: linear-gradient(95deg, #e0f0e8, #c8e0d6);
+            border-left: 3px solid #2e7d64;
+        }
+
+        .navigation ul li.active a,
+        .navigation ul li.active a i {
+            color: #2e7d64;
+            font-weight: 600;
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.25s;
+            z-index: 999;
+            backdrop-filter: blur(2px);
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* MAIN CONTENT */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 28px 48px 28px;
+        }
+
+        /* Header area */
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+            margin-top: 8px;
+        }
+
+        .greeting h1 {
+            font-size: 1.8rem;
+            color: #1e2f3a;
+        }
+
+        .greeting p {
+            color: #5f7c8b;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 240, 0.9);
+            border: none;
+            color: #b6695a;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 40px;
+            transition: 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .logout-btn:hover {
+            background: #ffe9e5;
+            transform: scale(0.98);
+        }
+
+        /* Kartu statistik - hanya 2 kartu (Botol dan Berat) */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 20px 24px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02), 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+            border: 1px solid #e9edf2;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-header span:first-child {
+            font-weight: 600;
+            color: #5f7c8b;
+            letter-spacing: 0.3px;
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #1e2f3a;
+            line-height: 1.1;
+            margin: 12px 0 4px;
+        }
+
+        .stat-sub {
+            font-size: 0.85rem;
+            color: #52b788;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trend-up {
+            color: #2e7d64;
+            background: #e0f2e9;
+            padding: 2px 8px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+        }
+
+        /* GRAFIK */
+        .chart-fullwidth {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 20px 24px 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e9edf2;
+            width: 100%;
+        }
+
+        .chart-fullwidth h3 {
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1e2f3a;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-filter {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 20px;
+            border: 1px solid #e9edf2;
+            background: white;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #5f7c8b;
+        }
+
+        .filter-btn.active {
+            background: #2e7d64;
+            color: white;
+            border-color: #2e7d64;
+        }
+
+        .filter-btn:hover:not(.active) {
+            background: #e8f5f1;
+            border-color: #2e7d64;
+        }
+
+        .download-btn {
+            padding: 8px 20px;
+            background: #2e7d64;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .download-btn:hover {
+            background: #1e5a48;
+            transform: translateY(-2px);
+        }
+
+        .chart-fullwidth canvas {
+            max-height: 320px;
+            width: 100%;
+        }
+
+        .legend-note {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #5f7c8b;
+            display: flex;
+            gap: 28px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .period-label {
+            font-size: 12px;
+            text-align: center;
+            margin-top: 12px;
+            color: #5f7c8b;
+        }
+
+        /* footer motivasi */
+        .motivation-footer {
+            background: linear-gradient(105deg, #eef5f2, #e2ede7);
+            border-radius: 30px;
+            padding: 20px 28px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .motivation-footer div {
+            font-weight: 500;
+            color: #2e7d64;
+        }
+
+        .motivation-footer i {
+            font-size: 1.5rem;
+            color: #2e7d64;
+            margin-right: 8px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 16px;
+            z-index: 2001;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            animation: slideInRight 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .notification-success {
+            background: #2b7a5c;
+            color: white;
+        }
+
+        .notification-info {
+            background: #3c9e7a;
+            color: white;
+        }
+
+        .notification-error {
+            background: #b6695a;
+            color: white;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 780px) {
+            .dashboard-container {
+                padding: 18px 16px 32px;
+            }
+            .stat-value {
+                font-size: 2.2rem;
+            }
+            .greeting h1 {
+                font-size: 1.4rem;
+            }
+            .chart-filter {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-buttons {
+                justify-content: center;
+            }
+            .download-btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<button class="nav-toggle" id="navToggle">
+    <span></span>
+    <span></span>
+    <span></span>
+</button>
+
+<nav class="navigation" id="navigation">
+    <ul>
+        <li data-page="dashboard" class="active">
+            <a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        </li>
+    </ul>
+</nav>
+<div class="overlay" id="overlay"></div>
+
+<!-- Halaman Dashboard -->
+<div id="dashboardPage" class="page-content active-page">
+    <main class="dashboard-container">
+        <div class="header-flex">
+            <div class="greeting">
+                <h1>Selamat datang, <span id="userName">Ray Ricardo</span> <i class="fas fa-recycle" style="color:#2e7d64;"></i></h1>
+                <p>Terus kelola sampah plastik dan kelola lingkungan</p>
+            </div>
+            <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>Total Botol</span>
+                    <i class="fas fa-bottle-water" style="color:#52b788;"></i>
+                </div>
+                <div class="stat-value" id="totalBotolVal">9.999</div>
+                <div class="stat-sub"><i class="fas fa-chart-line"></i> 150 Botol dari minggu lalu <span class="trend-up">+12%</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>Total Berat</span>
+                    <i class="fas fa-weight-hanging" style="color:#e9c46a;"></i>
+                </div>
+                <div class="stat-value" id="totalBeratVal">9,999</div>
+                <div class="stat-sub"><i class="fas fa-chart-line"></i> 150 kg dari minggu lalu</div>
+            </div>
+        </div>
+
+        <div class="chart-fullwidth" id="reportSection">
+            <div class="chart-filter">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-period="weekly">📊 Mingguan</button>
+                    <button class="filter-btn" data-period="monthly">📅 Bulanan</button>
+                    <button class="filter-btn" data-period="yearly">📈 Tahunan</button>
+                </div>
+                <button id="downloadReportBtn" class="download-btn">
+                    <i class="fas fa-download"></i> Unduh Laporan
+                </button>
+            </div>
+            <h3><i class="fas fa-chart-line" style="color:#2e7d64;"></i> Grafik Pengelolaan Sampah Botol Plastik</h3>
+            <canvas id="wasteChart" width="800" height="300" style="width:100%; max-height:320px;"></canvas>
+            <div class="legend-note">
+                <span><i class="fas fa-circle" style="color:#52b788;"></i> Botol</span>
+                <span><i class="fas fa-circle" style="color:#e9c46a;"></i> Berat (kg)</span>
+            </div>
+            <div class="period-label" id="periodLabel">
+                Periode: Mingguan (1-7 Mei, 8-14 Mei, 15-21 Mei, 22-28 Mei 2026)
+            </div>
+        </div>
+
+        <div class="motivation-footer">
+            <div><i class="fas fa-leaf"></i>Pantau dan evaluasi laporan pengelolaan sampah plastik Anda. Dengan data yang akurat, kita bisa menciptakan perubahan nyata bagi lingkungan.</div>
+            <div><i class="fas fa-hand-holding-heart"></i> #dompetSadhar</div>
+        </div>
+    </main>
+</div>
+
+<script>
+// ----- DATA DASHBOARD -----
+// Data harian untuk agregasi
+const dailyData = {
+    labels: ["1 Mei", "2 Mei", "3 Mei", "4 Mei", "5 Mei", "6 Mei", "7 Mei", "8 Mei", "9 Mei", "10 Mei", "11 Mei", "12 Mei", "13 Mei", "14 Mei", "15 Mei", "16 Mei", "17 Mei", "18 Mei", "19 Mei", "20 Mei", "21 Mei", "22 Mei", "23 Mei", "24 Mei", "25 Mei", "26 Mei", "27 Mei", "28 Mei", "29 Mei", "30 Mei"],
+    botol: [10, 12, 14, 15, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66],
+    berat: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37]
+};
+
+let totalBotol = 9999;
+let totalBerat = 9999;
+let currentPeriod = 'weekly';
+
+let mainChart;
+
+// Fungsi agregasi data berdasarkan periode
+function getWeeklyData() {
+    const weeks = [];
+    const weeklyBotol = [];
+    const weeklyBerat = [];
+    
+    for (let i = 0; i < 4; i++) {
+        const start = i * 7;
+        const end = Math.min(start + 7, dailyData.labels.length);
+        const weekLabels = dailyData.labels.slice(start, end);
+        const weekBotol = dailyData.botol.slice(start, end).reduce((a, b) => a + b, 0);
+        const weekBerat = dailyData.berat.slice(start, end).reduce((a, b) => a + b, 0);
+        
+        weeks.push(`Minggu ${i + 1}`);
+        weeklyBotol.push(weekBotol);
+        weeklyBerat.push(weekBerat);
+    }
+    
+    return { labels: weeks, botol: weeklyBotol, berat: weeklyBerat, labelText: "Mingguan (1-7 Mei, 8-14 Mei, 15-21 Mei, 22-28 Mei 2026)" };
+}
+
+function getMonthlyData() {
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    const monthlyBotol = new Array(12).fill(0);
+    const monthlyBerat = new Array(12).fill(0);
+    
+    // Data untuk bulan Mei (bulan ke-5, index 4)
+    monthlyBotol[4] = dailyData.botol.reduce((a, b) => a + b, 0);
+    monthlyBerat[4] = dailyData.berat.reduce((a, b) => a + b, 0);
+    
+    // Data dummy untuk bulan lain
+    monthlyBotol[3] = 650; monthlyBerat[3] = 520;
+    monthlyBotol[5] = 850; monthlyBerat[5] = 680;
+    monthlyBotol[2] = 550; monthlyBerat[2] = 440;
+    monthlyBotol[1] = 520; monthlyBerat[1] = 410;
+    monthlyBotol[0] = 450; monthlyBerat[0] = 360;
+    
+    return { labels: months, botol: monthlyBotol, berat: monthlyBerat, labelText: "Bulanan - Januari s/d Desember 2026" };
+}
+
+function getYearlyData() {
+    const years = ["2022", "2023", "2024", "2025", "2026"];
+    const yearlyBotol = [1800, 2800, 4000, 6000, 8200];
+    const yearlyBerat = [1200, 2000, 3000, 4800, 6500];
+    
+    return { labels: years, botol: yearlyBotol, berat: yearlyBerat, labelText: "Tahunan - 2022 s/d 2026" };
+}
+
+function updateChart(period) {
+    let data;
+    
+    switch(period) {
+        case 'weekly':
+            data = getWeeklyData();
+            break;
+        case 'monthly':
+            data = getMonthlyData();
+            break;
+        case 'yearly':
+            data = getYearlyData();
+            break;
+        default:
+            data = getWeeklyData();
+    }
+    
+    document.getElementById('periodLabel').innerText = `Periode: ${data.labelText}`;
+    
+    if (mainChart) {
+        mainChart.data.labels = data.labels;
+        mainChart.data.datasets[0].data = data.botol;
+        mainChart.data.datasets[1].data = data.berat;
+        mainChart.update();
+    }
+}
+
+// Fungsi unduh laporan
+async function downloadReport() {
+    const reportSection = document.getElementById('reportSection');
+    const originalBoxShadow = reportSection.style.boxShadow;
+    const originalBorder = reportSection.style.border;
+    
+    reportSection.style.boxShadow = 'none';
+    reportSection.style.border = '1px solid #e9edf2';
+    
+    showNotification('📄 Sedang menyiapkan laporan...', 'info');
+    
+    try {
+        const canvas = await html2canvas(reportSection, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            logging: false,
+            useCORS: true
+        });
+        
+        const link = document.createElement('a');
+        const period = currentPeriod === 'weekly' ? 'Mingguan' : currentPeriod === 'monthly' ? 'Bulanan' : 'Tahunan';
+        const date = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        link.download = `Laporan_Sampah_${period}_${date}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+        
+        showNotification('✅ Laporan berhasil diunduh!', 'success');
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('❌ Gagal mengunduh laporan', 'error');
+    } finally {
+        reportSection.style.boxShadow = originalBoxShadow;
+        reportSection.style.border = originalBorder;
+    }
+}
+
+// Element references
+const navToggle = document.getElementById('navToggle');
+const navigation = document.getElementById('navigation');
+const overlay = document.getElementById('overlay');
+
+function updateDashboardNumbers() {
+    document.getElementById("totalBotolVal").innerText = totalBotol.toLocaleString("id-ID");
+    document.getElementById("totalBeratVal").innerText = totalBerat.toLocaleString("id-ID");
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i><span>${message}</span>`;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+function toggleNav() {
+    navToggle.classList.toggle("active");
+    navigation.classList.toggle("active");
+    overlay.classList.toggle("active");
+}
+
+function initMainChart() {
+    const ctx = document.getElementById("wasteChart").getContext("2d");
+    if (mainChart) mainChart.destroy();
+    
+    const weeklyData = getWeeklyData();
+    
+    mainChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: weeklyData.labels,
+            datasets: [
+                { label: "Botol", data: weeklyData.botol, backgroundColor: "#52b788", borderRadius: 8, borderWidth: 0 },
+                { label: "Berat (kg)", data: weeklyData.berat, backgroundColor: "#e9c46a", borderRadius: 8, borderWidth: 0 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { 
+                tooltip: { mode: "index", intersect: false }, 
+                legend: { position: "top" } 
+            },
+            scales: { 
+                y: { beginAtZero: true, grid: { color: "#e9edf2" }, title: { display: true, text: "Jumlah", color: "#5f7c8b" } }, 
+                x: { grid: { display: false }, title: { display: true, text: "Periode", color: "#5f7c8b" } } 
+            }
+        }
+    });
+}
+
+function initEventListeners() {
+    navToggle.addEventListener("click", toggleNav);
+    overlay.addEventListener("click", toggleNav);
+    
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            showNotification("🚪 Anda telah logout dari Dompet Sadhar. Sampai jumpa kembali! 🌱", 'info');
+        });
+    }
+    
+    // Filter period buttons
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentPeriod = btn.dataset.period;
+            updateChart(currentPeriod);
+        });
+    });
+    
+    // Download report button
+    const downloadBtn = document.getElementById('downloadReportBtn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', downloadReport);
+    }
+}
+
+function init() {
+    initMainChart();
+    updateDashboardNumbers();
+    initEventListeners();
+    
+    window.addEventListener("resize", () => {
+        if (mainChart) mainChart.resize();
+    });
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>

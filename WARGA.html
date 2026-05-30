@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Dompet Sadhar - Tukar Poin</title>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+
+        /* Tombol hamburger menu */
+        .nav-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 48px;
+            height: 48px;
+            background: #ffffff;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+            transition: all 0.25s ease;
+        }
+
+        .nav-toggle span {
+            display: block;
+            width: 24px;
+            height: 2.5px;
+            background: #1e2f3a;
+            border-radius: 4px;
+            transition: 0.25s;
+        }
+
+        .nav-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .nav-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .nav-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        /* Sidebar navigasi */
+        .navigation {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100vh;
+            background: #ffffff;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
+            transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            z-index: 1000;
+            padding-top: 90px;
+            overflow-y: auto;
+        }
+
+        .navigation.active {
+            left: 0;
+        }
+
+        .navigation ul {
+            list-style: none;
+        }
+
+        .navigation ul li {
+            margin: 8px 16px;
+            border-radius: 20px;
+            transition: 0.2s;
+        }
+
+        .navigation ul li a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 20px;
+            color: #1e2f3a;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            border-radius: 28px;
+            transition: all 0.2s;
+        }
+
+        .navigation ul li a i {
+            width: 24px;
+            font-size: 1.2rem;
+            color: #5f7c8b;
+        }
+
+        .navigation ul li:hover {
+            background: #e9edf2;
+        }
+
+        .navigation ul li.active {
+            background: linear-gradient(95deg, #e0f0e8, #c8e0d6);
+            border-left: 3px solid #2e7d64;
+        }
+
+        .navigation ul li.active a,
+        .navigation ul li.active a i {
+            color: #2e7d64;
+            font-weight: 600;
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.25s;
+            z-index: 999;
+            backdrop-filter: blur(2px);
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* MAIN CONTENT */
+        .dashboard-container, .poin-container, .reward-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 28px 48px 28px;
+        }
+
+        /* Sembunyikan konten yang tidak aktif */
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active-page {
+            display: block;
+        }
+
+        /* Header area */
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+            margin-top: 8px;
+        }
+
+        .greeting h1 {
+            font-size: 1.8rem;
+            color: #1e2f3a;
+        }
+
+        .greeting p {
+            color: #5f7c8b;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 240, 0.9);
+            border: none;
+            color: #b6695a;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 40px;
+            transition: 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .logout-btn:hover {
+            background: #ffe9e5;
+            transform: scale(0.98);
+        }
+
+        /* Kartu statistik */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 20px 24px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02), 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+            border: 1px solid #e9edf2;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-header span:first-child {
+            font-weight: 600;
+            color: #5f7c8b;
+            letter-spacing: 0.3px;
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #1e2f3a;
+            line-height: 1.1;
+            margin: 12px 0 4px;
+        }
+
+        .stat-sub {
+            font-size: 0.85rem;
+            color: #52b788;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trend-up {
+            color: #2e7d64;
+            background: #e0f2e9;
+            padding: 2px 8px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+        }
+
+        /* GRAFIK */
+        .chart-fullwidth {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 20px 24px 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e9edf2;
+            width: 100%;
+        }
+
+        .chart-fullwidth h3 {
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1e2f3a;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-fullwidth canvas {
+            max-height: 320px;
+            width: 100%;
+        }
+
+        .legend-note {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #5f7c8b;
+            display: flex;
+            gap: 28px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Tabel riwayat */
+        .recent-section {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 20px 24px;
+            margin-top: 8px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e9edf2;
+        }
+
+        .recent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .recent-header h3 {
+            font-weight: 600;
+            color: #1e2f3a;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0;
+        }
+
+        .lihat-semua-btn {
+            background: #3c9e7a;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .lihat-semua-btn:hover {
+            background: #2e7d64;
+            transform: scale(0.98);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 14px 10px 12px 0;
+            color: #5f7c8b;
+            font-weight: 600;
+            border-bottom: 1px solid #e9edf2;
+        }
+
+        td {
+            padding: 14px 10px 14px 0;
+            border-bottom: 1px solid #e9edf2;
+            vertical-align: middle;
+            color: #1e2f3a;
+        }
+
+        .status-badge {
+            background: #dff0e6;
+            color: #2b7a5c;
+            padding: 4px 12px;
+            border-radius: 60px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-badge-pending {
+            background: #ffe9e5;
+            color: #b6695a;
+            padding: 4px 12px;
+            border-radius: 60px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-badge-approved {
+            background: #dff0e6;
+            color: #2b7a5c;
+            padding: 4px 12px;
+            border-radius: 60px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .detail-link {
+            color: #3c9e7a;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .detail-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Modal Riwayat Lengkap */
+        .full-history-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+            overflow-y: auto;
+        }
+
+        .full-history-content {
+            background: white;
+            max-width: 1200px;
+            margin: 50px auto;
+            border-radius: 32px;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        .full-history-header {
+            padding: 24px 28px 16px;
+            border-bottom: 2px solid #eef2f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .full-history-header h3 {
+            color: #1e3b3a;
+            font-size: 1.3rem;
+        }
+
+        .full-history-close {
+            font-size: 28px;
+            cursor: pointer;
+            color: #9aaeb9;
+            transition: 0.2s;
+        }
+
+        .full-history-close:hover {
+            color: #e76d6d;
+        }
+
+        .full-history-body {
+            padding: 24px 28px 32px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* Halaman Poin */
+        .poin-summary {
+            background: linear-gradient(135deg, #2e7d64, #1e5a48);
+            border-radius: 32px;
+            padding: 32px;
+            color: white;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .total-poin-large {
+            font-size: 4rem;
+            font-weight: 800;
+            margin: 16px 0;
+        }
+
+        .poin-level {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+        }
+
+        /* Form Upload di Halaman Poin */
+        .upload-section {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 24px;
+            margin-bottom: 32px;
+            border: 1px solid #e9edf2;
+        }
+
+        .upload-section h3 {
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1e2f3a;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-area {
+            border: 2px dashed #2e7d64;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            background: #f0f4f8;
+        }
+
+        .upload-area:hover {
+            border-color: #1e5a48;
+            background: #e8f5f1;
+        }
+
+        .upload-area i {
+            font-size: 48px;
+            color: #2e7d64;
+            margin-bottom: 12px;
+        }
+
+        .upload-area p {
+            color: #5f7c8b;
+            margin-top: 8px;
+        }
+
+        .image-preview {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .volume-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .volume-card {
+            cursor: pointer;
+        }
+
+        .volume-card input[type="radio"] {
+            display: none;
+        }
+
+        .volume-content {
+            border: 2px solid #e9edf2;
+            border-radius: 20px;
+            padding: 16px 12px;
+            text-align: center;
+            transition: all 0.2s;
+            background: #ffffff;
+            cursor: pointer;
+        }
+
+        .volume-card input[type="radio"]:checked + .volume-content {
+            border-color: #2e7d64;
+            background: linear-gradient(135deg, #e8f5f1, #d4ede5);
+            box-shadow: 0 4px 12px rgba(46, 125, 100, 0.2);
+        }
+
+        .volume-content i {
+            font-size: 32px;
+            color: #2e7d64;
+            margin-bottom: 8px;
+        }
+
+        .volume-content strong {
+            display: block;
+            color: #1e2f3a;
+            margin-bottom: 4px;
+        }
+
+        .volume-content span {
+            font-size: 0.75rem;
+            color: #5f7c8b;
+        }
+
+        .volume-badge {
+            display: inline-block;
+            background: #f0f4f8;
+            padding: 4px 8px;
+            border-radius: 20px;
+            margin-top: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #2e7d64;
+        }
+
+        .form-summary {
+            background: linear-gradient(135deg, #e8f5f1, #f0f8f5);
+            border-radius: 20px;
+            padding: 16px 20px;
+            margin: 20px 0;
+        }
+
+        .form-summary h4 {
+            margin-bottom: 12px;
+            color: #1e2f3a;
+        }
+
+        .summary-details {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+        }
+
+        .summary-details span {
+            background: #ffffff;
+            padding: 6px 14px;
+            border-radius: 40px;
+            color: #1e2f3a;
+        }
+
+        .submit-upload-btn {
+            background: linear-gradient(135deg, #2e7d64, #1e5a48);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            font-size: 1rem;
+            margin-top: 16px;
+        }
+
+        .submit-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 125, 100, 0.4);
+        }
+
+        /* Halaman Reward - Style Baru */
+        .filter-category {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 8px 24px;
+            background: white;
+            border: 1px solid #e9edf2;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #5f7c8b;
+        }
+
+        .category-btn.active {
+            background: #2e7d64;
+            color: white;
+            border-color: #2e7d64;
+        }
+
+        .category-btn:hover:not(.active) {
+            background: #e8f5f1;
+            border-color: #2e7d64;
+        }
+
+        .reward-list {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 20px 24px;
+            margin-bottom: 32px;
+        }
+
+        .reward-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 16px;
+            border-bottom: 1px solid #e9edf2;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .reward-item:last-child {
+            border-bottom: none;
+        }
+
+        .reward-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 2;
+            min-width: 200px;
+        }
+
+        .reward-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reward-icon.food {
+            background: #e8f5e9;
+        }
+        .reward-icon.food i {
+            color: #4caf50;
+        }
+        .reward-icon.drink {
+            background: #e3f2fd;
+        }
+        .reward-icon.drink i {
+            color: #2196f3;
+        }
+        .reward-icon.goods {
+            background: #fff3e0;
+        }
+        .reward-icon.goods i {
+            color: #ff9800;
+        }
+
+        .reward-icon i {
+            font-size: 1.6rem;
+        }
+
+        .reward-details h4 {
+            color: #1e2f3a;
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+
+        .reward-details p {
+            font-size: 0.75rem;
+            color: #5f7c8b;
+        }
+
+        .reward-stock {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #e8f5f1;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+        }
+
+        .reward-stock i {
+            color: #2e7d64;
+        }
+
+        .reward-stock span {
+            font-weight: 600;
+            color: #2e7d64;
+        }
+
+        .reward-stock.low-stock {
+            background: #ffe9e5;
+        }
+
+        .reward-stock.low-stock i, 
+        .reward-stock.low-stock span {
+            color: #b6695a;
+        }
+
+        .reward-price {
+            font-weight: 700;
+            color: #e9c46a;
+            font-size: 1rem;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .reward-price i {
+            margin-right: 4px;
+        }
+
+        .exchange-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0f4f8;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+
+        .quantity-selector button {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #2e7d64;
+            transition: 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .quantity-selector button:hover {
+            background: #2e7d64;
+            color: white;
+        }
+
+        .quantity-selector button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: white;
+            color: #ccc;
+        }
+
+        .quantity-selector span {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .total-points {
+            font-size: 0.85rem;
+            color: #5f7c8b;
+            min-width: 100px;
+        }
+
+        .total-points strong {
+            color: #e9c46a;
+            font-size: 1rem;
+        }
+
+        .exchange-btn {
+            background: linear-gradient(135deg, #2e7d64, #1e5a48);
+            color: white;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .exchange-btn:hover:not(:disabled) {
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(46, 125, 100, 0.3);
+        }
+
+        .exchange-btn:disabled {
+            background: #e9edf2;
+            color: #5f7c8b;
+            cursor: not-allowed;
+        }
+
+        /* Riwayat Penukaran User */
+        .history-exchange-section {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 20px 24px;
+            margin-top: 20px;
+        }
+
+        .history-exchange-section h3 {
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1e2f3a;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-status {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-filter-btn {
+            padding: 6px 16px;
+            border: 1px solid #e9edf2;
+            background: white;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            color: #5f7c8b;
+        }
+
+        .status-filter-btn.active {
+            background: #2e7d64;
+            color: white;
+            border-color: #2e7d64;
+        }
+
+        .status-filter-btn:hover:not(.active) {
+            background: #e8f5f1;
+            border-color: #2e7d64;
+        }
+
+        /* Modal Konfirmasi */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 400px;
+            margin: 100px auto;
+            border-radius: 32px;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 24px 28px 16px;
+            border-bottom: 2px solid #eef2f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            color: #1e3b3a;
+            font-size: 1.3rem;
+        }
+
+        .modal-close {
+            font-size: 28px;
+            cursor: pointer;
+            color: #9aaeb9;
+            transition: 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #e76d6d;
+        }
+
+        .modal-body {
+            padding: 24px 28px 32px;
+            text-align: center;
+        }
+
+        .modal-body p {
+            margin-bottom: 16px;
+            color: #1e2f3a;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        .btn-cancel, .btn-confirm {
+            padding: 10px 24px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-cancel {
+            background: #f0f4f8;
+            color: #5a6e7c;
+        }
+
+        .btn-cancel:hover {
+            background: #e4eaf0;
+        }
+
+        .btn-confirm {
+            background: #2e7d64;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #1e5a48;
+        }
+
+        /* footer motivasi */
+        .motivation-footer {
+            background: linear-gradient(105deg, #eef5f2, #e2ede7);
+            border-radius: 30px;
+            padding: 20px 28px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .motivation-footer div {
+            font-weight: 500;
+            color: #2e7d64;
+        }
+
+        .motivation-footer i {
+            font-size: 1.5rem;
+            color: #2e7d64;
+            margin-right: 8px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 16px;
+            z-index: 2001;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            animation: slideInRight 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .notification-success {
+            background: #2b7a5c;
+            color: white;
+        }
+
+        .notification-info {
+            background: #3c9e7a;
+            color: white;
+        }
+
+        .notification-error {
+            background: #b6695a;
+            color: white;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 780px) {
+            .dashboard-container, .poin-container, .reward-container {
+                padding: 18px 16px 32px;
+            }
+            .stat-value {
+                font-size: 2.2rem;
+            }
+            .greeting h1 {
+                font-size: 1.4rem;
+            }
+            .volume-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .exchange-control {
+                width: 100%;
+                justify-content: space-between;
+                margin-top: 8px;
+            }
+            .reward-info {
+                flex: 1;
+            }
+            .full-history-content {
+                margin: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<button class="nav-toggle" id="navToggle">
+    <span></span>
+    <span></span>
+    <span></span>
+</button>
+
+<nav class="navigation" id="navigation">
+    <ul>
+        <li data-page="dashboard" class="active">
+            <a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        </li>
+        <li data-page="poin">
+            <a href="#"><i class="fas fa-check-circle"></i> Poin</a>
+        </li>
+        <li data-page="reward">
+            <a href="#"><i class="fas fa-gift"></i> Reward</a>
+        </li>
+    </ul>
+</nav>
+<div class="overlay" id="overlay"></div>
+
+<!-- Halaman Dashboard -->
+<div id="dashboardPage" class="page-content active-page">
+    <main class="dashboard-container">
+        <div class="header-flex">
+            <div class="greeting">
+                <h1>Selamat datang, <span id="userName">Ray Ricardo</span> <i class="fas fa-recycle" style="color:#2e7d64;"></i></h1>
+                <p>Terus kelola sampah plastik dan kumpulkan poin</p>
+            </div>
+            <button id="logoutSideBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>Total Poin</span>
+                    <i class="fas fa-star" style="color:#e9c46a;"></i>
+                </div>
+                <div class="stat-value" id="totalPoinVal">9.999</div>
+                <div class="stat-sub"><i class="fas fa-chart-line"></i> 150 Poin dari minggu lalu <span class="trend-up">+12%</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>Total Botol</span>
+                    <i class="fas fa-bottle-water" style="color:#52b788;"></i>
+                </div>
+                <div class="stat-value" id="totalBotolVal">9.999</div>
+                <div class="stat-sub"><i class="fas fa-chart-line"></i> 150 Botol dari minggu lalu</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>Total Berat</span>
+                    <i class="fas fa-weight-hanging" style="color:#e9c46a;"></i>
+                </div>
+                <div class="stat-value" id="totalBeratVal">9,999</div>
+                <div class="stat-sub"><i class="fas fa-chart-line"></i> 150 kg dari minggu lalu</div>
+            </div>
+        </div>
+
+        <div class="chart-fullwidth">
+            <h3><i class="fas fa-chart-line" style="color:#2e7d64;"></i> Grafik Pengelolaan Sampah Botol Plastik</h3>
+            <canvas id="wasteChart" width="800" height="300" style="width:100%; max-height:320px;"></canvas>
+            <div class="legend-note">
+                <span><i class="fas fa-circle" style="color:#2e7d64;"></i> Poin</span>
+                <span><i class="fas fa-circle" style="color:#52b788;"></i> Botol</span>
+                <span><i class="fas fa-circle" style="color:#e9c46a;"></i> Berat (kg)</span>
+            </div>
+            <div style="font-size:12px; text-align:center; margin-top:12px; color:#5f7c8b;">
+                Periode: 1 Mei - 29 Mei 2026
+            </div>
+        </div>
+
+        <!-- Riwayat Terbaru dengan Tombol Lihat Semua -->
+        <div class="recent-section">
+            <div class="recent-header">
+                <h3><i class="fas fa-history" style="color:#2e7d64;"></i> Riwayat Terbaru</h3>
+                <button id="lihatSemuaRiwayatBtn" class="lihat-semua-btn">
+                    <i class="fas fa-eye"></i> Lihat Semua Riwayat
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Botol</th>
+                            <th>Berat</th>
+                            <th>Poin</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="motivation-footer">
+            <div><i class="fas fa-leaf"></i> Yuk, terus pilah Sampah plastik! Setiap Botol yang kamu kumpulkan membantu bumi menjadi bersih.</div>
+            <div><i class="fas fa-hand-holding-heart"></i> #dompetSadhar</div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Riwayat Lengkap -->
+<div id="fullHistoryModal" class="full-history-modal">
+    <div class="full-history-content">
+        <div class="full-history-header">
+            <h3><i class="fas fa-history" style="color:#2e7d64;"></i> Semua Riwayat Transaksi</h3>
+            <span class="full-history-close">&times;</span>
+        </div>
+        <div class="full-history-body">
+            <div class="table-responsive">
+                <table id="fullHistoryTable">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Botol</th>
+                            <th>Berat</th>
+                            <th>Poin</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fullHistoryBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Halaman Poin -->
+<div id="poinPage" class="page-content">
+    <main class="poin-container">
+        <div class="header-flex">
+            <div class="greeting">
+                <h1><i class="fas fa-check-circle" style="color:#2e7d64;"></i> Poin Saya</h1>
+                <p>Upload sampah plastik dan kumpulkan poin</p>
+            </div>
+            <button id="logoutPoinBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+
+        <div class="poin-summary">
+            <i class="fas fa-star" style="font-size: 3rem; color:#e9c46a;"></i>
+            <div class="total-poin-large" id="poinTotalDisplay">9.999</div>
+            <div class="poin-level" id="poinLevel">Level: Pejuang Lingkungan</div>
+        </div>
+
+        <div class="upload-section">
+            <h3><i class="fas fa-cloud-upload-alt" style="color:#2e7d64;"></i> Upload Sampah Plastik</h3>
+            <form id="uploadForm">
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Klik atau drag & drop foto disini</p>
+                    <input type="file" id="imageUpload" accept="image/*" hidden>
+                </div>
+                <div id="imagePreview" class="image-preview"></div>
+
+                <div class="volume-options">
+                    <label class="volume-card">
+                        <input type="radio" name="volume" value="small" data-botol="10" data-berat="0.15" data-poin="15">
+                        <div class="volume-content">
+                            <i class="fas fa-bottle-water"></i>
+                            <strong>Kecil</strong>
+                            <span>330-600 ml</span>
+                            <span class="volume-badge">~10 botol/kg</span>
+                        </div>
+                    </label>
+                    <label class="volume-card">
+                        <input type="radio" name="volume" value="medium" data-botol="8" data-berat="0.2" data-poin="20">
+                        <div class="volume-content">
+                            <i class="fas fa-bottle-water"></i>
+                            <strong>Sedang</strong>
+                            <span>600-1000 ml</span>
+                            <span class="volume-badge">~8 botol/kg</span>
+                        </div>
+                    </label>
+                    <label class="volume-card">
+                        <input type="radio" name="volume" value="large" data-botol="5" data-berat="0.35" data-poin="35">
+                        <div class="volume-content">
+                            <i class="fas fa-bottle-water"></i>
+                            <strong>Besar</strong>
+                            <span>1.5-2 L</span>
+                            <span class="volume-badge">~5 botol/kg</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-summary" id="formSummary" style="display: none;">
+                    <h4><i class="fas fa-chart-simple" style="color:#2e7d64;"></i> Ringkasan</h4>
+                    <div class="summary-details">
+                        <span>Perkiraan Botol: <strong id="summaryBotol">0</strong> botol</span>
+                        <span>Perkiraan Berat: <strong id="summaryBerat">0</strong> kg</span>
+                        <span>Poin Dapat: <strong id="summaryPoin">0</strong> poin</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-upload-btn">
+                    <i class="fas fa-check-circle"></i> Upload & Verifikasi
+                </button>
+            </form>
+        </div>
+
+        <div class="motivation-footer">
+            <div><i class="fas fa-chart-simple"></i> Ayo kumpulkan lebih banyak poin untuk naik level!</div>
+            <div><i class="fas fa-medal"></i> Semakin banyak sampah plastik yang didaur ulang, semakin baik untuk bumi!</div>
+        </div>
+    </main>
+</div>
+
+<!-- Halaman Reward - Dengan Fitur Kategori Makanan, Minuman, Barang -->
+<div id="rewardPage" class="page-content">
+    <main class="reward-container">
+        <div class="header-flex">
+            <div class="greeting">
+                <h1><i class="fas fa-gift" style="color:#2e7d64;"></i> Tukar Poin</h1>
+                <p>Tukarkan poin Anda dengan hadiah menarik</p>
+            </div>
+            <button id="logoutRewardBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+
+        <div class="poin-summary" style="background: linear-gradient(135deg, #2e7d64, #1e5a48);">
+            <i class="fas fa-coins" style="font-size: 3rem; color:#e9c46a;"></i>
+            <div class="total-poin-large" id="rewardPoinDisplay">9.999</div>
+            <div class="poin-level">Poin tersedia untuk ditukar</div>
+        </div>
+
+        <!-- Filter Kategori -->
+        <div class="filter-category">
+            <button class="category-btn active" data-category="all">📦 Semua</button>
+            <button class="category-btn" data-category="food">🍔 Makanan</button>
+            <button class="category-btn" data-category="drink">🥤 Minuman</button>
+            <button class="category-btn" data-category="goods">🎁 Barang</button>
+        </div>
+
+        <div class="reward-list">
+            <h3 style="margin-bottom: 20px;"><i class="fas fa-tags" style="color:#2e7d64;"></i> Daftar Hadiah</h3>
+            <div id="rewardItemsContainer"></div>
+        </div>
+
+        <!-- Riwayat Penukaran User -->
+        <div class="history-exchange-section">
+            <h3><i class="fas fa-history" style="color:#2e7d64;"></i> Riwayat Penukaran Reward</h3>
+            <div class="filter-status">
+                <button class="status-filter-btn active" data-filter="all">Semua</button>
+                <button class="status-filter-btn" data-filter="pending">⏳ Pending</button>
+                <button class="status-filter-btn" data-filter="approved">✅ Disetujui</button>
+            </div>
+            <div class="table-responsive">
+                <table id="exchangeHistoryTable">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Reward</th>
+                            <th>Jumlah</th>
+                            <th>Total Poin</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="exchangeHistoryBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="motivation-footer">
+            <div><i class="fas fa-shopping-cart"></i> Pilih jumlah reward yang ingin ditukarkan!</div>
+            <div><i class="fas fa-tree"></i> Setiap penukaran membantu lingkungan</div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Konfirmasi -->
+<div id="confirmModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-question-circle"></i> Konfirmasi Penukaran</h3>
+            <span class="modal-close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p id="confirmMessage"></p>
+            <div class="modal-buttons">
+                <button class="btn-cancel" id="cancelConfirmBtn">Batal</button>
+                <button class="btn-confirm" id="confirmExchangeBtn">Ya, Tukar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ----- DATA DASHBOARD -----
+let labels = ["1 Mei", "8 Mei", "15 Mei", "22 Mei", "29 Mei"];
+let poinData = [120, 145, 168, 192, 220];
+let botolData = [100, 118, 134, 155, 170];
+let beratData = [78, 92, 105, 122, 130];
+
+// Semua data riwayat (untuk modal)
+let allHistoryData = [
+    { tanggal: "1 Mei 2026, 10:30", botol: "100 Botol", berat: "1,5 kg", poin: "+150", status: "Berhasil" },
+    { tanggal: "3 Mei 2026, 14:15", botol: "45 Botol", berat: "0,7 kg", poin: "+67", status: "Berhasil" },
+    { tanggal: "8 Mei 2026, 09:45", botol: "120 Botol", berat: "1,8 kg", poin: "+180", status: "Berhasil" },
+    { tanggal: "15 Mei 2026, 11:20", botol: "80 Botol", berat: "1,2 kg", poin: "+120", status: "Berhasil" },
+    { tanggal: "22 Mei 2026, 16:00", botol: "150 Botol", berat: "2,3 kg", poin: "+225", status: "Berhasil" },
+    { tanggal: "25 Mei 2026, 09:00", botol: "30 Botol", berat: "0,5 kg", poin: "+45", status: "Berhasil" },
+    { tanggal: "27 Mei 2026, 13:30", botol: "60 Botol", berat: "0,9 kg", poin: "+90", status: "Berhasil" },
+    { tanggal: "29 Mei 2026, 11:45", botol: "40 Botol", berat: "0,6 kg", poin: "+60", status: "Berhasil" },
+];
+
+// Data riwayat penukaran user (pending dan approved)
+let userExchangeHistory = [
+    { id: 1, tanggal: "30 Mei 2026, 14:30", reward: "Paket Nasi Box", jumlah: 2, totalPoin: 1000, status: "pending" },
+    { id: 2, tanggal: "28 Mei 2026, 10:15", reward: "Tumbler Stainless Steel", jumlah: 1, totalPoin: 800, status: "approved" },
+    { id: 3, tanggal: "25 Mei 2026, 09:45", reward: "Kopi Spesial", jumlah: 3, totalPoin: 750, status: "approved" },
+    { id: 4, tanggal: "27 Mei 2026, 16:20", reward: "Voucher Makanan", jumlah: 2, totalPoin: 800, status: "pending" },
+    { id: 5, tanggal: "22 Mei 2026, 11:00", reward: "Eco Bag", jumlah: 1, totalPoin: 200, status: "approved" },
+];
+
+let totalPoin = 9999;
+let totalBotol = 9999;
+let totalBerat = 9999;
+
+// Data reward dengan stok dan kategori (food, drink, goods) - Icon disamakan per kategori
+let rewardsData = [
+    { id: 1, name: "Paket Nasi Box", points: 500, stock: 25, category: "food", desc: "Paket nasi lengkap dengan lauk" },
+    { id: 2, name: "Jus Buah Segar", points: 300, stock: 40, category: "drink", desc: "Jus buah segar tanpa pengawet" },
+    { id: 3, name: "Voucher Makanan", points: 400, stock: 30, category: "food", desc: "Voucher untuk makan di restoran mitra" },
+    { id: 4, name: "Kopi Spesial", points: 250, stock: 50, category: "drink", desc: "Kopi pilihan berkualitas" },
+    { id: 5, name: "Tumbler Stainless Steel", points: 800, stock: 15, category: "goods", desc: "Tumbler ramah lingkungan" },
+    { id: 6, name: "Eco Bag", points: 200, stock: 50, category: "goods", desc: "Tas belanja ramah lingkungan" },
+    { id: 7, name: "Pupuk Organik 5kg", points: 300, stock: 40, category: "goods", desc: "Pupuk untuk tanaman" },
+    { id: 8, name: "Donasi Penanaman Pohon", points: 1000, stock: 100, category: "goods", desc: "Donasi untuk menanam 1 pohon" },
+    { id: 9, name: "Snack Sehat", points: 150, stock: 60, category: "food", desc: "Camilan sehat organik" },
+    { id: 10, name: "Air Mineral", points: 100, stock: 80, category: "drink", desc: "Air mineral kemasan" }
+];
+
+let currentCategoryFilter = 'all';
+let selectedReward = null;
+let selectedQuantity = 1;
+let currentHistoryFilter = 'all';
+
+let mainChart;
+let selectedImage = null;
+let currentVolumeData = null;
+
+// Element references
+const dashboardPage = document.getElementById('dashboardPage');
+const poinPage = document.getElementById('poinPage');
+const rewardPage = document.getElementById('rewardPage');
+const navToggle = document.getElementById('navToggle');
+const navigation = document.getElementById('navigation');
+const overlay = document.getElementById('overlay');
+const confirmModal = document.getElementById('confirmModal');
+const modalClose = document.querySelectorAll('.modal-close');
+const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
+const confirmExchangeBtn = document.getElementById('confirmExchangeBtn');
+const fullHistoryModal = document.getElementById('fullHistoryModal');
+const lihatSemuaBtn = document.getElementById('lihatSemuaRiwayatBtn');
+const fullHistoryClose = document.querySelector('.full-history-close');
+
+// Render tabel riwayat (hanya 5 terbaru)
+function renderHistoryTable() {
+    const tbody = document.getElementById("historyBody");
+    if (!tbody) return;
+    
+    // Hanya tampilkan 5 data terbaru
+    const recentData = allHistoryData.slice(0, 5);
+    
+    tbody.innerHTML = "";
+    recentData.forEach((item) => {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerText = item.tanggal;
+        row.insertCell(1).innerText = item.botol;
+        row.insertCell(2).innerText = item.berat;
+        row.insertCell(3).innerHTML = `<strong style="color:#2b7a5c;">${item.poin}</strong>`;
+        row.insertCell(4).innerHTML = `<span class="status-badge"><i class="fas fa-check-circle"></i> ${item.status}</span>`;
+        row.insertCell(5).innerHTML = `<a href="#" class="detail-link" data-tgl="${item.tanggal}">Lihat detail</a>`;
+    });
+
+    document.querySelectorAll("#historyBody .detail-link").forEach((link) => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            const tgl = link.getAttribute("data-tgl") || "transaksi";
+            showNotification(`✨ Detail transaksi: ${tgl}`, 'info');
+        });
+    });
+}
+
+// Render semua riwayat untuk modal
+function renderFullHistoryTable() {
+    const tbody = document.getElementById("fullHistoryBody");
+    if (!tbody) return;
+    
+    tbody.innerHTML = "";
+    allHistoryData.forEach((item) => {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerText = item.tanggal;
+        row.insertCell(1).innerText = item.botol;
+        row.insertCell(2).innerText = item.berat;
+        row.insertCell(3).innerHTML = `<strong style="color:#2b7a5c;">${item.poin}</strong>`;
+        row.insertCell(4).innerHTML = `<span class="status-badge"><i class="fas fa-check-circle"></i> ${item.status}</span>`;
+        row.insertCell(5).innerHTML = `<a href="#" class="detail-link" data-tgl="${item.tanggal}">Lihat detail</a>`;
+    });
+
+    document.querySelectorAll("#fullHistoryBody .detail-link").forEach((link) => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            const tgl = link.getAttribute("data-tgl") || "transaksi";
+            showNotification(`✨ Detail transaksi: ${tgl}`, 'info');
+        });
+    });
+}
+
+// Buka modal riwayat lengkap
+function openFullHistoryModal() {
+    renderFullHistoryTable();
+    fullHistoryModal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+// Tutup modal riwayat lengkap
+function closeFullHistoryModal() {
+    fullHistoryModal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+// Render riwayat penukaran user
+function renderUserExchangeHistory() {
+    const tbody = document.getElementById("exchangeHistoryBody");
+    if (!tbody) return;
+    
+    let filteredData = userExchangeHistory;
+    if (currentHistoryFilter !== 'all') {
+        filteredData = userExchangeHistory.filter(item => item.status === currentHistoryFilter);
+    }
+    
+    tbody.innerHTML = "";
+    filteredData.forEach((item) => {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerText = item.tanggal;
+        row.insertCell(1).innerHTML = `<strong style="color:#2e7d64;">${item.reward}</strong>`;
+        row.insertCell(2).innerHTML = `${item.jumlah} x`;
+        row.insertCell(3).innerHTML = `<span style="color:#e9c46a; font-weight:600;">${item.totalPoin.toLocaleString()} poin</span>`;
+        
+        if (item.status === 'pending') {
+            row.insertCell(4).innerHTML = `<span class="status-badge-pending"><i class="fas fa-clock"></i> Menunggu Verifikasi</span>`;
+            row.insertCell(5).innerHTML = `<a href="#" class="detail-link" data-id="${item.id}">Lihat detail</a>`;
+        } else {
+            row.insertCell(4).innerHTML = `<span class="status-badge-approved"><i class="fas fa-check-circle"></i> Disetujui</span>`;
+            row.insertCell(5).innerHTML = `<a href="#" class="detail-link" data-id="${item.id}">Lihat detail</a>`;
+        }
+    });
+    
+    document.querySelectorAll('#exchangeHistoryBody .detail-link').forEach((link) => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            const id = parseInt(link.getAttribute("data-id"));
+            const transaction = userExchangeHistory.find(t => t.id === id);
+            if (transaction) {
+                showNotification(`✨ Detail penukaran: ${transaction.jumlah}x ${transaction.reward} pada ${transaction.tanggal}. Total poin: ${transaction.totalPoin.toLocaleString()} poin. Status: ${transaction.status === 'pending' ? 'Menunggu verifikasi' : 'Telah disetujui'}.`, 'info');
+            }
+        });
+    });
+}
+
+// Fungsi render reward dengan quantity selector dan filter kategori
+function renderRewards() {
+    const container = document.getElementById('rewardItemsContainer');
+    if (!container) return;
+    
+    let filteredRewards = rewardsData;
+    if (currentCategoryFilter !== 'all') {
+        filteredRewards = rewardsData.filter(reward => reward.category === currentCategoryFilter);
+    }
+    
+    container.innerHTML = '';
+    filteredRewards.forEach(reward => {
+        const isLowStock = reward.stock <= 5;
+        const stockDisplay = reward.stock > 0 ? `${reward.stock} tersisa` : 'Habis';
+        const isOutOfStock = reward.stock <= 0;
+        
+        let categoryClass = '';
+        let iconName = '';
+        
+        if (reward.category === 'food') {
+            categoryClass = 'food';
+            iconName = 'fa-utensils';
+        } else if (reward.category === 'drink') {
+            categoryClass = 'drink';
+            iconName = 'fa-mug-hot';
+        } else {
+            categoryClass = 'goods';
+            iconName = 'fa-box';
+        }
+        
+        const rewardDiv = document.createElement('div');
+        rewardDiv.className = 'reward-item';
+        rewardDiv.setAttribute('data-id', reward.id);
+        rewardDiv.setAttribute('data-points', reward.points);
+        rewardDiv.setAttribute('data-stock', reward.stock);
+        
+        rewardDiv.innerHTML = `
+            <div class="reward-info">
+                <div class="reward-icon ${categoryClass}">
+                    <i class="fas ${iconName}"></i>
+                </div>
+                <div class="reward-details">
+                    <h4>${reward.name}</h4>
+                    <p>${reward.desc}</p>
+                </div>
+            </div>
+            <div class="reward-stock ${isLowStock && reward.stock > 0 ? 'low-stock' : ''}">
+                <i class="fas fa-boxes"></i>
+                <span>Stok: ${stockDisplay}</span>
+            </div>
+            <div class="reward-price">
+                <i class="fas fa-star"></i> ${reward.points.toLocaleString()} poin/unit
+            </div>
+            <div class="exchange-control">
+                <div class="quantity-selector">
+                    <button class="qty-minus" data-id="${reward.id}" ${isOutOfStock ? 'disabled' : ''}>-</button>
+                    <span id="qty-${reward.id}">1</span>
+                    <button class="qty-plus" data-id="${reward.id}" ${isOutOfStock ? 'disabled' : ''}>+</button>
+                </div>
+                <div class="total-points">
+                    Total: <strong id="total-${reward.id}">${reward.points.toLocaleString()}</strong> poin
+                </div>
+                <button class="exchange-btn" data-id="${reward.id}" ${isOutOfStock ? 'disabled' : ''}>
+                    <i class="fas fa-exchange-alt"></i> Tukar
+                </button>
+            </div>
+        `;
+        container.appendChild(rewardDiv);
+    });
+    
+    // Event listener untuk tombol minus/plus quantity
+    filteredRewards.forEach(reward => {
+        const minusBtn = document.querySelector(`.qty-minus[data-id="${reward.id}"]`);
+        const plusBtn = document.querySelector(`.qty-plus[data-id="${reward.id}"]`);
+        const qtySpan = document.getElementById(`qty-${reward.id}`);
+        const totalSpan = document.getElementById(`total-${reward.id}`);
+        
+        if (minusBtn) {
+            minusBtn.addEventListener('click', () => {
+                let currentQty = parseInt(qtySpan.innerText);
+                if (currentQty > 1) {
+                    currentQty--;
+                    qtySpan.innerText = currentQty;
+                    totalSpan.innerText = (reward.points * currentQty).toLocaleString();
+                }
+            });
+        }
+        
+        if (plusBtn) {
+            plusBtn.addEventListener('click', () => {
+                let currentQty = parseInt(qtySpan.innerText);
+                if (currentQty < reward.stock) {
+                    currentQty++;
+                    qtySpan.innerText = currentQty;
+                    totalSpan.innerText = (reward.points * currentQty).toLocaleString();
+                } else {
+                    showNotification(`⚠️ Stok tidak mencukupi! Maksimal ${reward.stock} item.`, 'error');
+                }
+            });
+        }
+    });
+    
+    // Event listener untuk tombol tukar
+    document.querySelectorAll('.exchange-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(btn.dataset.id);
+            const reward = rewardsData.find(r => r.id === id);
+            const qtySpan = document.getElementById(`qty-${reward.id}`);
+            const quantity = parseInt(qtySpan.innerText);
+            
+            if (reward && reward.stock >= quantity) {
+                const totalPointsNeeded = reward.points * quantity;
+                
+                if (totalPoin >= totalPointsNeeded) {
+                    selectedReward = reward;
+                    selectedQuantity = quantity;
+                    
+                    document.getElementById('confirmMessage').innerHTML = `
+                        Anda akan menukarkan <strong>${quantity}x ${reward.name}</strong><br>
+                        Total poin yang dibutuhkan: <strong style="color:#e9c46a;">${totalPointsNeeded.toLocaleString()} poin</strong><br>
+                        Stok setelah ditukar: <strong>${reward.stock - quantity}</strong>
+                    `;
+                    confirmModal.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    showNotification(`❌ Poin tidak mencukupi! Butuh ${totalPointsNeeded.toLocaleString()} poin, Anda memiliki ${totalPoin.toLocaleString()} poin.`, 'error');
+                }
+            } else {
+                showNotification(`❌ Stok tidak mencukupi! Tersedia ${reward.stock} item.`, 'error');
+            }
+        });
+    });
+}
+
+// Fungsi untuk melakukan penukaran
+function processExchange() {
+    if (selectedReward && selectedQuantity) {
+        const totalPointsNeeded = selectedReward.points * selectedQuantity;
+        
+        totalPoin -= totalPointsNeeded;
+        
+        const rewardIndex = rewardsData.findIndex(r => r.id === selectedReward.id);
+        if (rewardIndex !== -1) {
+            rewardsData[rewardIndex].stock -= selectedQuantity;
+        }
+        
+        const now = new Date();
+        const tanggalString = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + ', ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        
+        const newId = userExchangeHistory.length + 1;
+        userExchangeHistory.unshift({
+            id: newId,
+            tanggal: tanggalString,
+            reward: selectedReward.name,
+            jumlah: selectedQuantity,
+            totalPoin: totalPointsNeeded,
+            status: "pending"
+        });
+        
+        // Tambah ke semua riwayat
+        allHistoryData.unshift({
+            tanggal: tanggalString,
+            botol: "-",
+            berat: "-",
+            poin: `-${totalPointsNeeded.toLocaleString()}`,
+            status: "Berhasil"
+        });
+        
+        updateAllPoinDisplays();
+        updateDashboardNumbers();
+        renderHistoryTable();
+        renderRewards();
+        renderUserExchangeHistory();
+        
+        const lastDate = labels[labels.length - 1];
+        const nextWeek = parseInt(lastDate.split(' ')[0]) + 7;
+        labels.push(`${nextWeek} Mei`);
+        poinData.push(poinData[poinData.length - 1] - totalPointsNeeded);
+        botolData.push(botolData[botolData.length - 1]);
+        beratData.push(beratData[beratData.length - 1]);
+        initMainChart();
+        
+        showNotification(`🎉 Permintaan penukaran ${selectedQuantity}x ${selectedReward.name} berhasil! Menunggu verifikasi admin.`, 'success');
+        
+        closeConfirmModal();
+        
+        selectedReward = null;
+        selectedQuantity = 1;
+    }
+}
+
+function closeConfirmModal() {
+    confirmModal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function updateAllPoinDisplays() {
+    const poinTotalDisplay = document.getElementById('poinTotalDisplay');
+    const rewardPoinDisplay = document.getElementById('rewardPoinDisplay');
+    const totalPoinVal = document.getElementById('totalPoinVal');
+    
+    if (poinTotalDisplay) poinTotalDisplay.innerText = totalPoin.toLocaleString('id-ID');
+    if (rewardPoinDisplay) rewardPoinDisplay.innerText = totalPoin.toLocaleString('id-ID');
+    if (totalPoinVal) totalPoinVal.innerText = totalPoin.toLocaleString('id-ID');
+    
+    const poinLevel = document.getElementById('poinLevel');
+    if (poinLevel) {
+        if (totalPoin >= 10000) poinLevel.innerText = 'Level: 🌟 Eco Master';
+        else if (totalPoin >= 5000) poinLevel.innerText = 'Level: 🌿 Eco Warrior';
+        else if (totalPoin >= 2000) poinLevel.innerText = 'Level: 💚 Pejuang Lingkungan';
+        else poinLevel.innerText = 'Level: 🌱 Pemula Hijau';
+    }
+}
+
+function initMainChart() {
+    const ctx = document.getElementById("wasteChart").getContext("2d");
+    if (mainChart) mainChart.destroy();
+    mainChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [
+                { label: "Poin", data: poinData, borderColor: "#2e7d64", borderWidth: 3, tension: 0.2, fill: false, pointBackgroundColor: "#2e7d64", pointRadius: 5 },
+                { label: "Botol", data: botolData, borderColor: "#52b788", borderWidth: 3, tension: 0.2, fill: false, pointBackgroundColor: "#52b788", pointRadius: 5 },
+                { label: "Berat (kg)", data: beratData, borderColor: "#e9c46a", borderWidth: 3, tension: 0.2, fill: false, pointBackgroundColor: "#e9c46a", pointRadius: 5 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { 
+                tooltip: { mode: "index", intersect: false }, 
+                legend: { position: "top" } 
+            },
+            scales: { 
+                y: { beginAtZero: true, grid: { color: "#e9edf2" } }, 
+                x: { grid: { display: false } } 
+            }
+        }
+    });
+}
+
+function updateDashboardNumbers() {
+    document.getElementById("totalPoinVal").innerText = totalPoin.toLocaleString("id-ID");
+    document.getElementById("totalBotolVal").innerText = totalBotol.toLocaleString("id-ID");
+    document.getElementById("totalBeratVal").innerText = totalBerat.toLocaleString("id-ID");
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i><span>${message}</span>`;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+function handleImageUpload(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        showNotification('Silakan upload file gambar yang valid!', 'error');
+        return false;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        showNotification('Ukuran gambar maksimal 5MB!', 'error');
+        return false;
+    }
+    selectedImage = file;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('imagePreview').innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+    };
+    reader.readAsDataURL(file);
+    return true;
+}
+
+function updateSummary() {
+    const selected = document.querySelector('input[name="volume"]:checked');
+    if (selected) {
+        currentVolumeData = {
+            volume: selected.value,
+            botol: parseInt(selected.dataset.botol),
+            berat: parseFloat(selected.dataset.berat),
+            poin: parseInt(selected.dataset.poin)
+        };
+        document.getElementById('summaryBotol').textContent = currentVolumeData.botol;
+        document.getElementById('summaryBerat').textContent = currentVolumeData.berat;
+        document.getElementById('summaryPoin').textContent = currentVolumeData.poin;
+        document.getElementById('formSummary').style.display = 'block';
+    } else {
+        document.getElementById('formSummary').style.display = 'none';
+        currentVolumeData = null;
+    }
+}
+
+function submitUpload(e) {
+    e.preventDefault();
+    if (!selectedImage) {
+        showNotification('❌ Silakan upload foto sampah plastik terlebih dahulu!', 'error');
+        return;
+    }
+    if (!currentVolumeData) {
+        showNotification('❌ Silakan pilih volume botol!', 'error');
+        return;
+    }
+    
+    const now = new Date();
+    const tanggalString = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + ', ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    
+    allHistoryData.unshift({
+        tanggal: tanggalString,
+        botol: `${currentVolumeData.botol} Botol`,
+        berat: `${currentVolumeData.berat.toFixed(2)} kg`,
+        poin: `+${currentVolumeData.poin}`,
+        status: "Berhasil"
+    });
+    
+    totalPoin += currentVolumeData.poin;
+    totalBotol += currentVolumeData.botol;
+    totalBerat += currentVolumeData.berat;
+    
+    const lastDate = labels[labels.length - 1];
+    const nextWeek = parseInt(lastDate.split(' ')[0]) + 7;
+    labels.push(`${nextWeek} Mei`);
+    poinData.push(poinData[poinData.length - 1] + currentVolumeData.poin);
+    botolData.push(botolData[botolData.length - 1] + currentVolumeData.botol);
+    beratData.push(beratData[beratData.length - 1] + currentVolumeData.berat);
+    
+    updateDashboardNumbers();
+    updateAllPoinDisplays();
+    renderHistoryTable();
+    renderRewards();
+    initMainChart();
+    
+    selectedImage = null;
+    currentVolumeData = null;
+    document.getElementById('imagePreview').innerHTML = '';
+    document.getElementById('formSummary').style.display = 'none';
+    document.querySelectorAll('input[name="volume"]').forEach(radio => radio.checked = false);
+    document.getElementById('imageUpload').value = '';
+    
+    showNotification(`✅ Berhasil! Anda mendapatkan ${currentVolumeData.poin} poin! 🌱`, 'success');
+}
+
+function setActivePage(pageId) {
+    document.querySelectorAll('.page-content').forEach(page => {
+        page.classList.remove('active-page');
+    });
+    
+    if (pageId === 'dashboard') {
+        dashboardPage.classList.add('active-page');
+    } else if (pageId === 'poin') {
+        poinPage.classList.add('active-page');
+        updateAllPoinDisplays();
+    } else if (pageId === 'reward') {
+        rewardPage.classList.add('active-page');
+        updateAllPoinDisplays();
+        renderRewards();
+        renderUserExchangeHistory();
+    }
+    
+    const navItems = document.querySelectorAll(".navigation ul li");
+    navItems.forEach((item) => {
+        item.classList.remove("active");
+        if (item.getAttribute("data-page") === pageId) {
+            item.classList.add("active");
+        }
+    });
+    
+    if (navigation.classList.contains("active")) toggleNav();
+}
+
+function toggleNav() {
+    navToggle.classList.toggle("active");
+    navigation.classList.toggle("active");
+    overlay.classList.toggle("active");
+}
+
+function initEventListeners() {
+    navToggle.addEventListener("click", toggleNav);
+    overlay.addEventListener("click", toggleNav);
+    
+    document.querySelectorAll(".navigation ul li").forEach((item) => {
+        item.addEventListener("click", (e) => {
+            e.preventDefault();
+            const page = item.getAttribute("data-page");
+            if (page) setActivePage(page);
+        });
+    });
+    
+    document.querySelectorAll('.logout-btn').forEach(btn => {
+        btn.addEventListener("click", () => {
+            showNotification("🚪 Anda telah logout dari Dompet Sadhar. Sampai jumpa kembali! 🌱", 'info');
+        });
+    });
+    
+    // Tombol Lihat Semua Riwayat
+    if (lihatSemuaBtn) {
+        lihatSemuaBtn.addEventListener('click', openFullHistoryModal);
+    }
+    
+    // Tutup modal
+    if (fullHistoryClose) {
+        fullHistoryClose.addEventListener('click', closeFullHistoryModal);
+    }
+    
+    window.addEventListener('click', (e) => {
+        if (e.target === fullHistoryModal) {
+            closeFullHistoryModal();
+        }
+    });
+    
+    // Filter kategori buttons
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    categoryBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            categoryBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentCategoryFilter = btn.dataset.category;
+            renderRewards();
+        });
+    });
+    
+    // Filter status buttons
+    const filterBtns = document.querySelectorAll('.status-filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentHistoryFilter = btn.dataset.filter;
+            renderUserExchangeHistory();
+        });
+    });
+    
+    modalClose.forEach(btn => {
+        btn.addEventListener('click', closeConfirmModal);
+    });
+    
+    if (cancelConfirmBtn) {
+        cancelConfirmBtn.addEventListener('click', closeConfirmModal);
+    }
+    
+    if (confirmExchangeBtn) {
+        confirmExchangeBtn.addEventListener('click', processExchange);
+    }
+    
+    window.addEventListener('click', (e) => {
+        if (e.target === confirmModal) {
+            closeConfirmModal();
+        }
+    });
+    
+    const uploadArea = document.getElementById('uploadArea');
+    const imageInput = document.getElementById('imageUpload');
+    const volumeRadios = document.querySelectorAll('input[name="volume"]');
+    const uploadForm = document.getElementById('uploadForm');
+    
+    if (uploadArea) {
+        uploadArea.addEventListener('click', () => imageInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#1e5a48';
+            uploadArea.style.background = '#e8f5f1';
+        });
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#2e7d64';
+            uploadArea.style.background = '#f0f4f8';
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#2e7d64';
+            uploadArea.style.background = '#f0f4f8';
+            handleImageUpload(e.dataTransfer.files[0]);
+        });
+    }
+    
+    if (imageInput) {
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleImageUpload(e.target.files[0]);
+        });
+    }
+    
+    volumeRadios.forEach(radio => radio.addEventListener('change', updateSummary));
+    if (uploadForm) uploadForm.addEventListener('submit', submitUpload);
+}
+
+function init() {
+    renderHistoryTable();
+    initMainChart();
+    updateDashboardNumbers();
+    updateAllPoinDisplays();
+    initEventListeners();
+    renderRewards();
+    renderUserExchangeHistory();
+    
+    window.addEventListener("resize", () => {
+        if (mainChart) mainChart.resize();
+    });
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>

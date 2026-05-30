@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Dompet Sadhar - Dashboard Verifikasi Transaksi</title>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+
+        /* Tombol hamburger menu */
+        .nav-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 48px;
+            height: 48px;
+            background: #ffffff;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+            transition: all 0.25s ease;
+        }
+
+        .nav-toggle span {
+            display: block;
+            width: 24px;
+            height: 2.5px;
+            background: #1e2f3a;
+            border-radius: 4px;
+            transition: 0.25s;
+        }
+
+        .nav-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .nav-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .nav-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        /* Sidebar navigasi */
+        .navigation {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100vh;
+            background: #ffffff;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
+            transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            z-index: 1000;
+            padding-top: 90px;
+            overflow-y: auto;
+        }
+
+        .navigation.active {
+            left: 0;
+        }
+
+        .navigation ul {
+            list-style: none;
+        }
+
+        .navigation ul li {
+            margin: 8px 16px;
+            border-radius: 20px;
+            transition: 0.2s;
+        }
+
+        .navigation ul li a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 20px;
+            color: #1e2f3a;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            border-radius: 28px;
+            transition: all 0.2s;
+        }
+
+        .navigation ul li a i {
+            width: 24px;
+            font-size: 1.2rem;
+            color: #5f7c8b;
+        }
+
+        .navigation ul li:hover {
+            background: #e9edf2;
+        }
+
+        .navigation ul li.active {
+            background: linear-gradient(95deg, #e0f0e8, #c8e0d6);
+            border-left: 3px solid #2e7d64;
+        }
+
+        .navigation ul li.active a,
+        .navigation ul li.active a i {
+            color: #2e7d64;
+            font-weight: 600;
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.25s;
+            z-index: 999;
+            backdrop-filter: blur(2px);
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* MAIN CONTENT */
+        .dashboard-container, .verifikasi-container, .reward-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 28px 48px 28px;
+        }
+
+        /* Sembunyikan konten yang tidak aktif */
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active-page {
+            display: block;
+        }
+
+        /* Header area */
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+            margin-top: 8px;
+        }
+
+        .greeting h1 {
+            font-size: 1.8rem;
+            color: #1e2f3a;
+        }
+
+        .greeting p {
+            color: #5f7c8b;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 240, 0.9);
+            border: none;
+            color: #b6695a;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 40px;
+            transition: 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .logout-btn:hover {
+            background: #ffe9e5;
+            transform: scale(0.98);
+        }
+
+        /* Kartu statistik */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 20px 24px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02), 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+            border: 1px solid #e9edf2;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-header span:first-child {
+            font-weight: 600;
+            color: #5f7c8b;
+            letter-spacing: 0.3px;
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #1e2f3a;
+            line-height: 1.1;
+            margin: 12px 0 4px;
+        }
+
+        .stat-sub {
+            font-size: 0.85rem;
+            color: #52b788;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trend-up {
+            color: #2e7d64;
+            background: #e0f2e9;
+            padding: 2px 8px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+        }
+
+        /* GRAFIK */
+        .chart-fullwidth {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 20px 24px 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e9edf2;
+            width: 100%;
+        }
+
+        .chart-fullwidth h3 {
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1e2f3a;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-fullwidth canvas {
+            max-height: 320px;
+            width: 100%;
+        }
+
+        .legend-note {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #5f7c8b;
+            display: flex;
+            gap: 28px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Halaman Verifikasi */
+        .filter-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 10px 24px;
+            background: white;
+            border: 1px solid #e9edf2;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #5f7c8b;
+        }
+
+        .tab-btn.active {
+            background: #2e7d64;
+            color: white;
+            border-color: #2e7d64;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #e8f5f1;
+            border-color: #2e7d64;
+        }
+
+        .verifikasi-table {
+            background: white;
+            border-radius: 32px;
+            padding: 20px 24px;
+            overflow-x: auto;
+        }
+
+        .verifikasi-table h3 {
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1e2f3a;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-badge-pending {
+            background: #ffe9e5;
+            color: #b6695a;
+            padding: 4px 12px;
+            border-radius: 60px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-badge-approved {
+            background: #dff0e6;
+            color: #2b7a5c;
+            padding: 4px 12px;
+            border-radius: 60px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .approve-btn {
+            background: #2e7d64;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.75rem;
+            transition: 0.2s;
+        }
+
+        .approve-btn:hover {
+            background: #1e5a48;
+            transform: scale(0.98);
+        }
+
+        .detail-link {
+            color: #3c9e7a;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .detail-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Halaman Reward */
+        .filter-category {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 8px 24px;
+            background: white;
+            border: 1px solid #e9edf2;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #5f7c8b;
+        }
+
+        .category-btn.active {
+            background: #2e7d64;
+            color: white;
+            border-color: #2e7d64;
+        }
+
+        .category-btn:hover:not(.active) {
+            background: #e8f5f1;
+            border-color: #2e7d64;
+        }
+
+        .reward-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .add-reward-btn {
+            background: linear-gradient(135deg, #2e7d64, #1e5a48);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .add-reward-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 125, 100, 0.3);
+        }
+
+        .reward-list {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 20px 24px;
+        }
+
+        .reward-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid #e9edf2;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .reward-item:last-child {
+            border-bottom: none;
+        }
+
+        .reward-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 2;
+        }
+
+        .reward-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reward-icon.food {
+            background: #e8f5e9;
+        }
+        .reward-icon.food i {
+            color: #4caf50;
+        }
+        .reward-icon.drink {
+            background: #e3f2fd;
+        }
+        .reward-icon.drink i {
+            color: #2196f3;
+        }
+        .reward-icon.goods {
+            background: #fff3e0;
+        }
+        .reward-icon.goods i {
+            color: #ff9800;
+        }
+
+        .reward-icon i {
+            font-size: 1.5rem;
+        }
+
+        .reward-details h4 {
+            color: #1e2f3a;
+            margin-bottom: 4px;
+        }
+
+        .reward-details p {
+            font-size: 0.75rem;
+            color: #5f7c8b;
+        }
+
+        .reward-stats {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            flex: 1;
+        }
+
+        .reward-points {
+            font-weight: 700;
+            color: #e9c46a;
+            font-size: 1rem;
+        }
+
+        .reward-stock {
+            font-weight: 600;
+            color: #52b788;
+            font-size: 0.9rem;
+        }
+
+        .reward-stock i {
+            margin-right: 4px;
+        }
+
+        .reward-stock.low-stock {
+            color: #b6695a;
+        }
+
+        .reward-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .edit-reward-btn, .delete-reward-btn {
+            background: #3c9e7a;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.75rem;
+            transition: 0.2s;
+        }
+
+        .edit-reward-btn:hover {
+            background: #2e7d64;
+            transform: scale(0.98);
+        }
+
+        .delete-reward-btn {
+            background: #b6695a;
+        }
+
+        .delete-reward-btn:hover {
+            background: #a0523a;
+            transform: scale(0.98);
+        }
+
+        /* Modal Edit Reward */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 450px;
+            margin: 50px auto;
+            border-radius: 32px;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 24px 28px 16px;
+            border-bottom: 2px solid #eef2f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            color: #1e3b3a;
+            font-size: 1.3rem;
+        }
+
+        .modal-close {
+            font-size: 28px;
+            cursor: pointer;
+            color: #9aaeb9;
+            transition: 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #e76d6d;
+        }
+
+        .modal-body {
+            padding: 24px 28px 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d5a4a;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d4dfe6;
+            border-radius: 16px;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #2e7d64;
+            box-shadow: 0 0 0 3px rgba(46, 125, 100, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        .btn-cancel, .btn-save {
+            padding: 10px 24px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-cancel {
+            background: #f0f4f8;
+            color: #5a6e7c;
+        }
+
+        .btn-cancel:hover {
+            background: #e4eaf0;
+        }
+
+        .btn-save {
+            background: #2e7d64;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #1e5a48;
+        }
+
+        /* Tabel riwayat */
+        .recent-section {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 20px 24px;
+            margin-top: 8px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e9edf2;
+        }
+
+        .recent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .recent-header h3 {
+            font-weight: 600;
+            color: #1e2f3a;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0;
+        }
+
+        .lihat-semua-btn {
+            background: #3c9e7a;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .lihat-semua-btn:hover {
+            background: #2e7d64;
+            transform: scale(0.98);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 14px 10px 12px 0;
+            color: #5f7c8b;
+            font-weight: 600;
+            border-bottom: 1px solid #e9edf2;
+        }
+
+        td {
+            padding: 14px 10px 14px 0;
+            border-bottom: 1px solid #e9edf2;
+            vertical-align: middle;
+            color: #1e2f3a;
+        }
+
+        /* Modal Riwayat Lengkap */
+        .full-history-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+            overflow-y: auto;
+        }
+
+        .full-history-content {
+            background: white;
+            max-width: 1200px;
+            margin: 50px auto;
+            border-radius: 32px;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        .full-history-header {
+            padding: 24px 28px 16px;
+            border-bottom: 2px solid #eef2f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .full-history-header h3 {
+            color: #1e3b3a;
+            font-size: 1.3rem;
+        }
+
+        .full-history-close {
+            font-size: 28px;
+            cursor: pointer;
+            color: #9aaeb9;
+            transition: 0.2s;
+        }
+
+        .full-history-close:hover {
+            color: #e76d6d;
+        }
+
+        .full-history-body {
+            padding: 24px 28px 32px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* footer motivasi */
+        .motivation-footer {
+            background: linear-gradient(105deg, #eef5f2, #e2ede7);
+            border-radius: 30px;
+            padding: 20px 28px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .motivation-footer div {
+            font-weight: 500;
+            color: #2e7d64;
+        }
+
+        .motivation-footer i {
+            font-size: 1.5rem;
+            color: #2e7d64;
+            margin-right: 8px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 16px;
+            z-index: 2001;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            animation: slideInRight 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .notification-success {
+            background: #2b7a5c;
+            color: white;
+        }
+
+        .notification-info {
+            background: #3c9e7a;
+            color: white;
+        }
+
+        .notification-error {
+            background: #b6695a;
+            color: white;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 780px) {
+            .dashboard-container, .verifikasi-container, .reward-container {
+                padding: 18px 16px 32px;
+            }
+            .stat-value {
+                font-size: 2.2rem;
+            }
+            .greeting h1 {
+                font-size: 1.4rem;
+            }
+            .filter-tabs, .filter-category {
+                justify-content: center;
+            }
+            .reward-stats {
+                width: 100%;
+                justify-content: space-between;
+                margin-top: 8px;
+                margin-left: 66px;
+            }
+            .reward-actions {
+                width: 100%;
+                justify-content: flex-end;
+                margin-top: 8px;
+            }
+            .full-history-content {
+                margin: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<button class="nav-toggle" id="navToggle">
+    <span></span>
+    <span></span>
+    <span></span>
+</button>
+
+<nav class="navigation" id="navigation">
+    <ul>
+        <li data-page="dashboard" class="active">
+            <a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        </li>
+        <li data-page="verifikasi">
+            <a href="#"><i class="fas fa-check-double"></i> Verifikasi</a>
+        </li>
+        <li data-page="reward">
+            <a href="#"><i class="fas fa-gift"></i> Reward</a>
+        </li>
+    </ul>
+</nav>
+<div class="overlay" id="overlay"></div>
+
+<!-- Halaman Dashboard -->
+<div id="dashboardPage" class="page-content active-page">
+    <main class="dashboard-container">
+        <div class="header-flex">
+            <div class="greeting">
+                <h1>Selamat datang, <span id="userName">Admin</span> <i class="fas fa-recycle" style="color:#2e7d64;"></i></h1>
+                <p>Kelola dan pantau transaksi penukaran reward</p>
+            </div>
+            <button id="logoutSideBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>Total Reward</span>
+                    <i class="fas fa-gift" style="color:#e9c46a;"></i>
+                </div>
+                <div class="stat-value" id="totalRewardVal">1.250</div>
+                <div class="stat-sub"><i class="fas fa-chart-line"></i> 120 Reward dari bulan lalu <span class="trend-up">+8%</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>Transaksi Pending</span>
+                    <i class="fas fa-clock" style="color:#b6695a;"></i>
+                </div>
+                <div class="stat-value" id="pendingCount">3</div>
+                <div class="stat-sub"><i class="fas fa-chart-line"></i> Menunggu verifikasi</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>Total Transaksi</span>
+                    <i class="fas fa-exchange-alt" style="color:#52b788;"></i>
+                </div>
+                <div class="stat-value" id="totalTransaksiVal">2.847</div>
+                <div class="stat-sub"><i class="fas fa-chart-line"></i> 320 Transaksi dari bulan lalu <span class="trend-up">+15%</span></div>
+            </div>
+        </div>
+
+        <div class="chart-fullwidth">
+            <h3><i class="fas fa-chart-line" style="color:#2e7d64;"></i> Grafik Total Penukaran Per Hari</h3>
+            <canvas id="wasteChart" width="800" height="300" style="width:100%; max-height:320px;"></canvas>
+            <div class="legend-note">
+                <span><i class="fas fa-circle" style="color:#2e7d64;"></i> Total Penukaran (Unit)</span>
+            </div>
+            <div style="font-size:12px; text-align:center; margin-top:12px; color:#5f7c8b;">
+                Periode: 1 Mei - 30 Mei 2026
+            </div>
+        </div>
+
+        <!-- Riwayat Penukaran Reward Terbaru dengan Tombol Lihat Semua -->
+        <div class="recent-section">
+            <div class="recent-header">
+                <h3><i class="fas fa-history" style="color:#2e7d64;"></i> Riwayat Penukaran Reward Terbaru</h3>
+                <button id="lihatSemuaRiwayatBtn" class="lihat-semua-btn">
+                    <i class="fas fa-eye"></i> Lihat Semua Riwayat
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Reward</th>
+                            <th>Poin</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="motivation-footer">
+            <div><i class="fas fa-leaf"></i> Di balik setiap transaksi ada pengguna yang menanti kepastian. Verifikasi dengan penuh tanggung jawab.</div>
+            <div><i class="fas fa-hand-holding-heart"></i> #dompetSadhar</div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Riwayat Lengkap -->
+<div id="fullHistoryModal" class="full-history-modal">
+    <div class="full-history-content">
+        <div class="full-history-header">
+            <h3><i class="fas fa-history" style="color:#2e7d64;"></i> Semua Riwayat Penukaran Reward</h3>
+            <span class="full-history-close">&times;</span>
+        </div>
+        <div class="full-history-body">
+            <div class="table-responsive">
+                <table id="fullHistoryTable">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Reward</th>
+                            <th>Poin</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fullHistoryBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Halaman Verifikasi -->
+<div id="verifikasiPage" class="page-content">
+    <main class="verifikasi-container">
+        <div class="header-flex">
+            <div class="greeting">
+                <h1><i class="fas fa-check-double" style="color:#2e7d64;"></i> Verifikasi Transaksi</h1>
+                <p>Kelola dan verifikasi transaksi penukaran reward</p>
+            </div>
+            <button id="logoutVerifikasiBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+
+        <div class="filter-tabs">
+            <button class="tab-btn active" data-status="pending">⏳ Pending</button>
+            <button class="tab-btn" data-status="approved">✅ Disetujui</button>
+        </div>
+
+        <div class="verifikasi-table">
+            <h3><i class="fas fa-list" style="color:#2e7d64;"></i> <span id="tableTitle">Transaksi Menunggu Verifikasi</span></h3>
+            <div class="table-responsive">
+                <table id="verifikasiTable">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Nama Pengguna</th>
+                            <th>Reward</th>
+                            <th>Poin</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="verifikasiBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="motivation-footer">
+            <div><i class="fas fa-shield-alt"></i> Verifikasi dengan teliti sebelum menyetujui transaksi.</div>
+            <div><i class="fas fa-hand-holding-heart"></i> #dompetSadhar</div>
+        </div>
+    </main>
+</div>
+
+<!-- Halaman Reward dengan Kategori Makanan, Minuman, Barang -->
+<div id="rewardPage" class="page-content">
+    <main class="reward-container">
+        <div class="header-flex">
+            <div class="greeting">
+                <h1><i class="fas fa-gift" style="color:#2e7d64;"></i> Kelola Reward</h1>
+                <p>Kelola daftar reward, kategori, harga (poin), dan stok reward</p>
+            </div>
+            <button id="logoutRewardBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+
+        <!-- Filter Kategori -->
+        <div class="filter-category">
+            <button class="category-btn active" data-category="all">📦 Semua</button>
+            <button class="category-btn" data-category="food">🍔 Makanan</button>
+            <button class="category-btn" data-category="drink">🥤 Minuman</button>
+            <button class="category-btn" data-category="goods">🎁 Barang</button>
+        </div>
+
+        <div class="reward-header">
+            <h3><i class="fas fa-tags" style="color:#2e7d64;"></i> Daftar Reward</h3>
+            <button id="addRewardBtn" class="add-reward-btn">
+                <i class="fas fa-plus"></i> Tambah Reward
+            </button>
+        </div>
+
+        <div class="reward-list">
+            <div id="rewardItemsContainer"></div>
+        </div>
+
+        <div class="motivation-footer">
+            <div><i class="fas fa-edit"></i> Klik tombol Edit untuk mengubah kategori, harga (poin) dan jumlah stok reward.</div>
+            <div><i class="fas fa-hand-holding-heart"></i> #dompetSadhar</div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Edit Reward (Dengan Kategori) -->
+<div id="editRewardModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-edit"></i> Edit Reward</h3>
+            <span class="modal-close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editRewardForm">
+                <input type="hidden" id="editRewardId">
+                <div class="form-group">
+                    <label>Nama Reward</label>
+                    <input type="text" id="editRewardName" required>
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi</label>
+                    <input type="text" id="editRewardDesc" placeholder="Deskripsi reward">
+                </div>
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <select id="editRewardCategory">
+                        <option value="food">🍔 Makanan</option>
+                        <option value="drink">🥤 Minuman</option>
+                        <option value="goods">🎁 Barang</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Harga (Poin yang dibutuhkan)</label>
+                    <input type="number" id="editRewardPoints" min="0" step="100" required>
+                </div>
+                <div class="form-group">
+                    <label>Jumlah Stok Reward</label>
+                    <input type="number" id="editRewardStock" min="0" step="1" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" id="cancelEditBtn">Batal</button>
+                    <button type="submit" class="btn-save">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Reward (Dengan Kategori) -->
+<div id="addRewardModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus"></i> Tambah Reward Baru</h3>
+            <span class="modal-close-add">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="addRewardForm">
+                <div class="form-group">
+                    <label>Nama Reward</label>
+                    <input type="text" id="addRewardName" placeholder="Contoh: Paket Nasi Box" required>
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi</label>
+                    <input type="text" id="addRewardDesc" placeholder="Deskripsi reward">
+                </div>
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <select id="addRewardCategory">
+                        <option value="food">🍔 Makanan</option>
+                        <option value="drink">🥤 Minuman</option>
+                        <option value="goods">🎁 Barang</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Harga (Poin yang dibutuhkan)</label>
+                    <input type="number" id="addRewardPoints" min="0" step="100" value="500" required>
+                </div>
+                <div class="form-group">
+                    <label>Jumlah Stok Reward</label>
+                    <input type="number" id="addRewardStock" min="0" step="1" value="10" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" id="cancelAddBtn">Batal</button>
+                    <button type="submit" class="btn-save">Tambah Reward</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// ----- DATA DASHBOARD -----
+// Data Penukaran Per Hari (1-30 Mei 2026)
+const penukaranPerHari = [
+    12, 8, 15, 10, 7, 14, 18, 22, 19, 25,
+    30, 28, 35, 32, 40, 38, 45, 42, 50, 48,
+    55, 52, 60, 58, 65, 62, 70, 68, 75, 72
+];
+
+// Label tanggal (1-30 Mei)
+const labels = [];
+for (let i = 1; i <= 30; i++) {
+    labels.push(`${i} Mei`);
+}
+
+// SEMUA data riwayat penukaran yang sudah disetujui (approved)
+let allHistoryData = [
+    { tanggal: "30 Mei 2026, 18:30", reward: "Paket Nasi Box", poin: 500, status: "Disetujui" },
+    { tanggal: "29 Mei 2026, 14:20", reward: "Jus Buah Segar", poin: 300, status: "Disetujui" },
+    { tanggal: "28 Mei 2026, 09:45", reward: "Eco Bag", poin: 200, status: "Disetujui" },
+    { tanggal: "27 Mei 2026, 16:30", reward: "Kopi Spesial", poin: 250, status: "Disetujui" },
+    { tanggal: "26 Mei 2026, 11:15", reward: "Tumbler", poin: 800, status: "Disetujui" },
+    { tanggal: "25 Mei 2026, 10:00", reward: "Snack Sehat", poin: 150, status: "Disetujui" },
+    { tanggal: "24 Mei 2026, 13:45", reward: "Air Mineral", poin: 100, status: "Disetujui" },
+    { tanggal: "23 Mei 2026, 15:30", reward: "Pupuk Organik", poin: 300, status: "Disetujui" },
+    { tanggal: "22 Mei 2026, 14:30", reward: "Paket Nasi Box", poin: 500, status: "Disetujui" },
+    { tanggal: "21 Mei 2026, 12:00", reward: "Jus Buah Segar", poin: 300, status: "Disetujui" },
+];
+
+// Data untuk ditampilkan di tabel utama (5 terbaru)
+let historyData = allHistoryData.slice(0, 5);
+
+// Data transaksi pending (menunggu verifikasi)
+let pendingTransactions = [
+    { id: 1, tanggal: "31 Mei 2026, 10:15", nama: "Budi Santoso", reward: "Paket Nasi Box", poin: 500, status: "pending" },
+    { id: 2, tanggal: "31 Mei 2026, 09:30", nama: "Siti Aminah", reward: "Jus Buah Segar", poin: 300, status: "pending" },
+    { id: 3, tanggal: "30 Mei 2026, 20:45", nama: "Agus Wijaya", reward: "Eco Bag", poin: 200, status: "pending" },
+    { id: 4, tanggal: "30 Mei 2026, 15:20", nama: "Dewi Lestari", reward: "Kopi Spesial", poin: 250, status: "pending" },
+    { id: 5, tanggal: "29 Mei 2026, 11:00", nama: "Rina Febrianti", reward: "Tumbler", poin: 800, status: "pending" },
+];
+
+// Data transaksi yang sudah disetujui
+let approvedTransactions = [
+    { id: 6, tanggal: "28 Mei 2026, 14:30", nama: "Hendra Putra", reward: "Paket Nasi Box", poin: 500, status: "approved" },
+    { id: 7, tanggal: "27 Mei 2026, 09:15", nama: "Linda Wati", reward: "Eco Bag", poin: 200, status: "approved" },
+    { id: 8, tanggal: "26 Mei 2026, 16:45", nama: "Rudi Hartono", reward: "Jus Buah Segar", poin: 300, status: "approved" },
+    { id: 9, tanggal: "25 Mei 2026, 10:30", nama: "Sarah Azzahra", reward: "Kopi Spesial", poin: 250, status: "approved" },
+    { id: 10, tanggal: "24 Mei 2026, 13:20", nama: "Fajar Nugroho", reward: "Tumbler", poin: 800, status: "approved" },
+];
+
+// Data reward dengan stok dan kategori
+let rewardsData = [
+    { id: 1, name: "Paket Nasi Box", points: 500, stock: 25, category: "food", desc: "Paket nasi lengkap dengan lauk" },
+    { id: 2, name: "Jus Buah Segar", points: 300, stock: 40, category: "drink", desc: "Jus buah segar tanpa pengawet" },
+    { id: 3, name: "Kopi Spesial", points: 250, stock: 50, category: "drink", desc: "Kopi pilihan berkualitas" },
+    { id: 4, name: "Eco Bag", points: 200, stock: 50, category: "goods", desc: "Tas belanja ramah lingkungan" },
+    { id: 5, name: "Tumbler", points: 800, stock: 15, category: "goods", desc: "Tumbler stainless steel" },
+    { id: 6, name: "Snack Sehat", points: 150, stock: 60, category: "food", desc: "Camilan sehat organik" },
+    { id: 7, name: "Air Mineral", points: 100, stock: 80, category: "drink", desc: "Air mineral kemasan" },
+    { id: 8, name: "Pupuk Organik", points: 300, stock: 40, category: "goods", desc: "Pupuk untuk tanaman" }
+];
+
+let currentCategoryFilter = 'all';
+let nextRewardId = 9;
+
+// Data statistik
+let totalReward = rewardsData.reduce((sum, r) => sum + r.stock, 0);
+let totalTransaksi = 2847;
+
+let mainChart;
+let currentVerifikasiTab = 'pending';
+let currentEditRewardId = null;
+
+// Element references
+const dashboardPage = document.getElementById('dashboardPage');
+const verifikasiPage = document.getElementById('verifikasiPage');
+const rewardPage = document.getElementById('rewardPage');
+const navToggle = document.getElementById('navToggle');
+const navigation = document.getElementById('navigation');
+const overlay = document.getElementById('overlay');
+const editModal = document.getElementById('editRewardModal');
+const addModal = document.getElementById('addRewardModal');
+const modalClose = document.querySelector('.modal-close');
+const modalCloseAdd = document.querySelector('.modal-close-add');
+const cancelEditBtn = document.getElementById('cancelEditBtn');
+const cancelAddBtn = document.getElementById('cancelAddBtn');
+const addRewardBtn = document.getElementById('addRewardBtn');
+const fullHistoryModal = document.getElementById('fullHistoryModal');
+const lihatSemuaBtn = document.getElementById('lihatSemuaRiwayatBtn');
+const fullHistoryClose = document.querySelector('.full-history-close');
+
+// Render tabel riwayat (hanya 5 terbaru)
+function renderHistoryTable() {
+    const tbody = document.getElementById("historyBody");
+    if (!tbody) return;
+    
+    // Update historyData dengan 5 data terbaru dari allHistoryData
+    historyData = allHistoryData.slice(0, 5);
+    
+    tbody.innerHTML = "";
+    historyData.forEach((item) => {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerText = item.tanggal;
+        row.insertCell(1).innerHTML = `<strong style="color:#2e7d64;">${item.reward}</strong>`;
+        row.insertCell(2).innerHTML = `<span style="color:#e9c46a; font-weight:600;">${item.poin.toLocaleString()} poin</span>`;
+        row.insertCell(3).innerHTML = `<span class="status-badge-approved"><i class="fas fa-check-circle"></i> ${item.status}</span>`;
+        row.insertCell(4).innerHTML = `<a href="#" class="detail-link" data-tgl="${item.tanggal}">Lihat detail</a>`;
+    });
+
+    document.querySelectorAll("#historyBody .detail-link").forEach((link) => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            const tgl = link.getAttribute("data-tgl") || "transaksi";
+            showNotification(`✨ Detail penukaran reward: ${tgl}`, 'info');
+        });
+    });
+}
+
+// Render semua riwayat untuk modal
+function renderFullHistoryTable() {
+    const tbody = document.getElementById("fullHistoryBody");
+    if (!tbody) return;
+    
+    tbody.innerHTML = "";
+    allHistoryData.forEach((item) => {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerText = item.tanggal;
+        row.insertCell(1).innerHTML = `<strong style="color:#2e7d64;">${item.reward}</strong>`;
+        row.insertCell(2).innerHTML = `<span style="color:#e9c46a; font-weight:600;">${item.poin.toLocaleString()} poin</span>`;
+        row.insertCell(3).innerHTML = `<span class="status-badge-approved"><i class="fas fa-check-circle"></i> ${item.status}</span>`;
+        row.insertCell(4).innerHTML = `<a href="#" class="detail-link" data-tgl="${item.tanggal}">Lihat detail</a>`;
+    });
+
+    document.querySelectorAll("#fullHistoryBody .detail-link").forEach((link) => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            const tgl = link.getAttribute("data-tgl") || "transaksi";
+            showNotification(`✨ Detail penukaran reward: ${tgl}`, 'info');
+        });
+    });
+}
+
+// Buka modal riwayat lengkap
+function openFullHistoryModal() {
+    renderFullHistoryTable();
+    fullHistoryModal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+// Tutup modal riwayat lengkap
+function closeFullHistoryModal() {
+    fullHistoryModal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function renderVerifikasiTable() {
+    const tbody = document.getElementById("verifikasiBody");
+    const tableTitle = document.getElementById("tableTitle");
+    
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    
+    let data;
+    if (currentVerifikasiTab === 'pending') {
+        data = pendingTransactions;
+        tableTitle.innerText = "Transaksi Menunggu Verifikasi";
+    } else {
+        data = approvedTransactions;
+        tableTitle.innerText = "Riwayat Transaksi Disetujui";
+    }
+    
+    data.forEach((item) => {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerText = item.tanggal;
+        row.insertCell(1).innerHTML = `<strong>${item.nama}</strong>`;
+        row.insertCell(2).innerHTML = `<span style="color:#2e7d64;">${item.reward}</span>`;
+        row.insertCell(3).innerHTML = `<span style="color:#e9c46a; font-weight:600;">${item.poin.toLocaleString()} poin</span>`;
+        
+        if (currentVerifikasiTab === 'pending') {
+            row.insertCell(4).innerHTML = `<span class="status-badge-pending"><i class="fas fa-clock"></i> Pending</span>`;
+            row.insertCell(5).innerHTML = `
+                <button class="approve-btn" data-id="${item.id}"><i class="fas fa-check-circle"></i> Setujui</button>
+                <a href="#" class="detail-link" data-tgl="${item.tanggal}">Detail</a>
+            `;
+        } else {
+            row.insertCell(4).innerHTML = `<span class="status-badge-approved"><i class="fas fa-check-circle"></i> Disetujui</span>`;
+            row.insertCell(5).innerHTML = `<a href="#" class="detail-link" data-tgl="${item.tanggal}">Lihat detail</a>`;
+        }
+    });
+    
+    if (currentVerifikasiTab === 'pending') {
+        document.querySelectorAll('.approve-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(btn.dataset.id);
+                approveTransaction(id);
+            });
+        });
+    }
+    
+    document.querySelectorAll('.detail-link').forEach((link) => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            const tgl = link.getAttribute("data-tgl") || "transaksi";
+            showNotification(`✨ Detail transaksi: ${tgl}`, 'info');
+        });
+    });
+}
+
+function approveTransaction(id) {
+    const transaction = pendingTransactions.find(t => t.id === id);
+    if (transaction) {
+        const index = pendingTransactions.findIndex(t => t.id === id);
+        pendingTransactions.splice(index, 1);
+        
+        const reward = rewardsData.find(r => r.name === transaction.reward);
+        if (reward && reward.stock > 0) {
+            reward.stock -= 1;
+            totalReward -= 1;
+        }
+        
+        const approvedTrans = {
+            ...transaction,
+            status: 'approved'
+        };
+        approvedTransactions.unshift(approvedTrans);
+        
+        // Tambah ke semua riwayat
+        allHistoryData.unshift({
+            tanggal: transaction.tanggal,
+            reward: transaction.reward,
+            poin: transaction.poin,
+            status: "Disetujui"
+        });
+        
+        totalTransaksi += 1;
+        updateDashboardNumbers();
+        
+        renderVerifikasiTable();
+        renderHistoryTable();
+        renderRewards();
+        
+        document.getElementById("pendingCount").innerText = pendingTransactions.length;
+        
+        showNotification(`✅ Transaksi dari ${transaction.nama} telah disetujui! Stok reward berkurang 1.`, 'success');
+    }
+}
+
+function openEditRewardModal(rewardId) {
+    const reward = rewardsData.find(r => r.id === rewardId);
+    if (reward) {
+        currentEditRewardId = rewardId;
+        document.getElementById('editRewardId').value = reward.id;
+        document.getElementById('editRewardName').value = reward.name;
+        document.getElementById('editRewardDesc').value = reward.desc;
+        document.getElementById('editRewardCategory').value = reward.category;
+        document.getElementById('editRewardPoints').value = reward.points;
+        document.getElementById('editRewardStock').value = reward.stock;
+        editModal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function saveRewardChanges() {
+    const newName = document.getElementById('editRewardName').value;
+    const newDesc = document.getElementById('editRewardDesc').value;
+    const newCategory = document.getElementById('editRewardCategory').value;
+    const newPoints = parseInt(document.getElementById('editRewardPoints').value);
+    const newStock = parseInt(document.getElementById('editRewardStock').value);
+    
+    if (!newName.trim()) {
+        showNotification('❌ Nama reward tidak boleh kosong!', 'error');
+        return;
+    }
+    
+    if (isNaN(newPoints) || newPoints < 0) {
+        showNotification('❌ Harga poin tidak valid!', 'error');
+        return;
+    }
+    
+    if (isNaN(newStock) || newStock < 0) {
+        showNotification('❌ Jumlah stok tidak valid!', 'error');
+        return;
+    }
+    
+    const reward = rewardsData.find(r => r.id === currentEditRewardId);
+    if (reward) {
+        reward.name = newName;
+        reward.desc = newDesc;
+        reward.category = newCategory;
+        reward.points = newPoints;
+        reward.stock = newStock;
+        
+        totalReward = rewardsData.reduce((sum, r) => sum + r.stock, 0);
+        
+        renderRewards();
+        updateDashboardNumbers();
+        
+        showNotification(`✅ Reward "${reward.name}" berhasil diupdate!`, 'success');
+        
+        closeEditModal();
+    }
+}
+
+function closeEditModal() {
+    editModal.style.display = 'none';
+    document.body.style.overflow = '';
+    currentEditRewardId = null;
+}
+
+function openAddRewardModal() {
+    document.getElementById('addRewardName').value = '';
+    document.getElementById('addRewardDesc').value = '';
+    document.getElementById('addRewardCategory').value = 'food';
+    document.getElementById('addRewardPoints').value = 500;
+    document.getElementById('addRewardStock').value = 10;
+    addModal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeAddModal() {
+    addModal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function addNewReward() {
+    const name = document.getElementById('addRewardName').value;
+    const desc = document.getElementById('addRewardDesc').value;
+    const category = document.getElementById('addRewardCategory').value;
+    const points = parseInt(document.getElementById('addRewardPoints').value);
+    const stock = parseInt(document.getElementById('addRewardStock').value);
+    
+    if (!name.trim()) {
+        showNotification('❌ Nama reward tidak boleh kosong!', 'error');
+        return;
+    }
+    
+    if (isNaN(points) || points < 0) {
+        showNotification('❌ Harga poin tidak valid!', 'error');
+        return;
+    }
+    
+    if (isNaN(stock) || stock < 0) {
+        showNotification('❌ Jumlah stok tidak valid!', 'error');
+        return;
+    }
+    
+    const newReward = {
+        id: nextRewardId++,
+        name: name,
+        desc: desc || 'Reward menarik untuk Anda',
+        category: category,
+        points: points,
+        stock: stock
+    };
+    
+    rewardsData.push(newReward);
+    totalReward = rewardsData.reduce((sum, r) => sum + r.stock, 0);
+    
+    renderRewards();
+    updateDashboardNumbers();
+    
+    showNotification(`✅ Reward "${name}" berhasil ditambahkan!`, 'success');
+    
+    closeAddModal();
+}
+
+function deleteReward(rewardId) {
+    const reward = rewardsData.find(r => r.id === rewardId);
+    if (reward && confirm(`Apakah Anda yakin ingin menghapus reward "${reward.name}"?`)) {
+        const index = rewardsData.findIndex(r => r.id === rewardId);
+        rewardsData.splice(index, 1);
+        
+        totalReward = rewardsData.reduce((sum, r) => sum + r.stock, 0);
+        
+        renderRewards();
+        updateDashboardNumbers();
+        
+        showNotification(`🗑️ Reward "${reward.name}" berhasil dihapus!`, 'info');
+    }
+}
+
+function renderRewards() {
+    const container = document.getElementById('rewardItemsContainer');
+    if (!container) return;
+    
+    let filteredRewards = rewardsData;
+    if (currentCategoryFilter !== 'all') {
+        filteredRewards = rewardsData.filter(reward => reward.category === currentCategoryFilter);
+    }
+    
+    container.innerHTML = '';
+    filteredRewards.forEach(reward => {
+        const isLowStock = reward.stock <= 10;
+        const stockDisplay = reward.stock > 0 ? `${reward.stock} tersisa` : 'Habis';
+        
+        let categoryIcon = '';
+        let categoryClass = '';
+        if (reward.category === 'food') {
+            categoryIcon = 'fa-utensils';
+            categoryClass = 'food';
+        } else if (reward.category === 'drink') {
+            categoryIcon = 'fa-mug-hot';
+            categoryClass = 'drink';
+        } else {
+            categoryIcon = 'fa-box';
+            categoryClass = 'goods';
+        }
+        
+        const rewardDiv = document.createElement('div');
+        rewardDiv.className = 'reward-item';
+        rewardDiv.innerHTML = `
+            <div class="reward-info">
+                <div class="reward-icon ${categoryClass}">
+                    <i class="fas ${categoryIcon}"></i>
+                </div>
+                <div class="reward-details">
+                    <h4>${reward.name}</h4>
+                    <p>${reward.desc}</p>
+                </div>
+            </div>
+            <div class="reward-stats">
+                <div class="reward-points">
+                    <i class="fas fa-star"></i> ${reward.points.toLocaleString()} poin
+                </div>
+                <div class="reward-stock ${isLowStock && reward.stock > 0 ? 'low-stock' : ''}">
+                    <i class="fas fa-boxes"></i> Stok: ${stockDisplay}
+                </div>
+            </div>
+            <div class="reward-actions">
+                <button class="edit-reward-btn" data-id="${reward.id}">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="delete-reward-btn" data-id="${reward.id}">
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
+            </div>
+        `;
+        container.appendChild(rewardDiv);
+    });
+    
+    document.querySelectorAll('.edit-reward-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const id = parseInt(btn.dataset.id);
+            openEditRewardModal(id);
+        });
+    });
+    
+    document.querySelectorAll('.delete-reward-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const id = parseInt(btn.dataset.id);
+            deleteReward(id);
+        });
+    });
+}
+
+function updateDashboardNumbers() {
+    document.getElementById("totalRewardVal").innerText = totalReward.toLocaleString("id-ID");
+    document.getElementById("pendingCount").innerText = pendingTransactions.length;
+    document.getElementById("totalTransaksiVal").innerText = totalTransaksi.toLocaleString("id-ID");
+}
+
+function initMainChart() {
+    const ctx = document.getElementById("wasteChart").getContext("2d");
+    if (mainChart) mainChart.destroy();
+    mainChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [
+                { 
+                    label: "Total Penukaran", 
+                    data: penukaranPerHari, 
+                    backgroundColor: "#2e7d64", 
+                    borderRadius: 8,
+                    borderWidth: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { 
+                tooltip: { 
+                    mode: "index", 
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `Penukaran: ${context.raw} unit`;
+                        }
+                    }
+                }, 
+                legend: { position: "top" } 
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: true, 
+                    grid: { color: "#e9edf2" }, 
+                    title: { display: true, text: "Jumlah Penukaran (Unit)", color: "#5f7c8b" } 
+                }, 
+                x: { 
+                    grid: { display: false }, 
+                    title: { display: true, text: "Tanggal (Mei 2026)", color: "#5f7c8b" },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                        autoSkip: true,
+                        maxTicksLimit: 10
+                    }
+                } 
+            }
+        }
+    });
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i><span>${message}</span>`;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+function setActivePage(pageId) {
+    document.querySelectorAll('.page-content').forEach(page => {
+        page.classList.remove('active-page');
+    });
+    
+    if (pageId === 'dashboard') {
+        dashboardPage.classList.add('active-page');
+        updateDashboardNumbers();
+    } else if (pageId === 'verifikasi') {
+        verifikasiPage.classList.add('active-page');
+        renderVerifikasiTable();
+    } else if (pageId === 'reward') {
+        rewardPage.classList.add('active-page');
+        renderRewards();
+    }
+    
+    const navItems = document.querySelectorAll(".navigation ul li");
+    navItems.forEach((item) => {
+        item.classList.remove("active");
+        if (item.getAttribute("data-page") === pageId) {
+            item.classList.add("active");
+        }
+    });
+    
+    if (navigation.classList.contains("active")) toggleNav();
+}
+
+function toggleNav() {
+    navToggle.classList.toggle("active");
+    navigation.classList.toggle("active");
+    overlay.classList.toggle("active");
+}
+
+function initEventListeners() {
+    navToggle.addEventListener("click", toggleNav);
+    overlay.addEventListener("click", toggleNav);
+    
+    document.querySelectorAll(".navigation ul li").forEach((item) => {
+        item.addEventListener("click", (e) => {
+            e.preventDefault();
+            const page = item.getAttribute("data-page");
+            if (page) setActivePage(page);
+        });
+    });
+    
+    document.querySelectorAll('.logout-btn').forEach(btn => {
+        btn.addEventListener("click", () => {
+            showNotification("🚪 Anda telah logout dari Dompet Sadhar. Sampai jumpa kembali! 🌱", 'info');
+        });
+    });
+    
+    // Tombol Lihat Semua Riwayat
+    if (lihatSemuaBtn) {
+        lihatSemuaBtn.addEventListener('click', openFullHistoryModal);
+    }
+    
+    // Tutup modal
+    if (fullHistoryClose) {
+        fullHistoryClose.addEventListener('click', closeFullHistoryModal);
+    }
+    
+    window.addEventListener('click', (e) => {
+        if (e.target === fullHistoryModal) {
+            closeFullHistoryModal();
+        }
+    });
+    
+    // Filter kategori buttons
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    categoryBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            categoryBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentCategoryFilter = btn.dataset.category;
+            renderRewards();
+        });
+    });
+    
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentVerifikasiTab = btn.dataset.status;
+            renderVerifikasiTable();
+        });
+    });
+    
+    if (modalClose) {
+        modalClose.addEventListener('click', closeEditModal);
+    }
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', closeEditModal);
+    }
+    
+    if (modalCloseAdd) {
+        modalCloseAdd.addEventListener('click', closeAddModal);
+    }
+    if (cancelAddBtn) {
+        cancelAddBtn.addEventListener('click', closeAddModal);
+    }
+    
+    if (addRewardBtn) {
+        addRewardBtn.addEventListener('click', openAddRewardModal);
+    }
+    
+    const editForm = document.getElementById('editRewardForm');
+    if (editForm) {
+        editForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveRewardChanges();
+        });
+    }
+    
+    const addForm = document.getElementById('addRewardForm');
+    if (addForm) {
+        addForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            addNewReward();
+        });
+    }
+    
+    window.addEventListener('click', (e) => {
+        if (e.target === editModal) {
+            closeEditModal();
+        }
+        if (e.target === addModal) {
+            closeAddModal();
+        }
+    });
+}
+
+function init() {
+    renderHistoryTable();
+    initMainChart();
+    updateDashboardNumbers();
+    initEventListeners();
+    renderVerifikasiTable();
+    renderRewards();
+    
+    window.addEventListener("resize", () => {
+        if (mainChart) mainChart.resize();
+    });
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
